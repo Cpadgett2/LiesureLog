@@ -1,38 +1,17 @@
 package leisurelog;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Insets;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+
+
 
 public class LeisureLog extends JFrame {
 
@@ -43,7 +22,8 @@ public class LeisureLog extends JFrame {
         "Destination", "Check-Out", "Check-In"};
     private DefaultTableModel dtm = new DefaultTableModel(col, 1);
     private JTable table = new JTable(dtm);
-    private JMenuItem addMi = new JMenuItem("Marine Options");
+    private JMenuItem addMi = new JMenuItem("Marine Options"),
+            exportMi = new JMenuItem("Export Log");
 
     LeisureLog() {
         super("Leisure Log");
@@ -54,7 +34,9 @@ public class LeisureLog extends JFrame {
         JMenu jm = new JMenu("Admin");
         addMi.addActionListener(e -> options());
         jm.add(addMi);
-        jmb.add(jm);
+        //jm.addSeparator();
+        jm.add(exportMi);
+        jmb.add(jm);        
         this.setJMenuBar(jmb);
         this.setLayout(new BorderLayout());
         //this.add(mp, BorderLayout.NORTH);
@@ -97,9 +79,15 @@ public class LeisureLog extends JFrame {
     }
 
     // generic error messsage
-    private void errMessage(String str) {
-        JOptionPane.showMessageDialog(this,
+    private void errMessage(Component c, String str) {
+        JOptionPane.showMessageDialog(c,
                 str, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    // yes no cancel question
+    private int conMessage(Component c, String str){
+        return JOptionPane.showConfirmDialog(c, str);//, "", 
+                //JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
     }
 
     public static void main(String[] args) {
@@ -124,7 +112,7 @@ public class LeisureLog extends JFrame {
             rmLbl.setFont(nameLbl.getFont());
             tierLbl.setFont(nameLbl.getFont());
             GridBagConstraints c = new GridBagConstraints();
-            Insets i = new Insets(5, 10, 0, 0);
+            Insets i = new Insets(10, 20, 0, 0);
             c.weightx = 0.5;
             c.weighty = 0.5;
             c.insets = i;
@@ -139,17 +127,17 @@ public class LeisureLog extends JFrame {
             c.gridy = 1;
             c.anchor = GridBagConstraints.FIRST_LINE_START;
             c.fill = GridBagConstraints.HORIZONTAL;
-            i.set(0, 10, 5, 0);
+            i.set(0, 20, 5, 0);
             this.add(jtfID, c);
             c.anchor = GridBagConstraints.LINE_START;
-            c.fill = GridBagConstraints.NONE;
             c.gridx = 2;
             c.gridwidth = 1;
             c.gridy = 0;
             c.gridheight = 2;
             i.set(5, 3, 0, 10);
+            c.fill = GridBagConstraints.NONE;
             lkbtn.addActionListener(e -> lookup());
-            this.add(lkbtn, c);
+            this.add(lkbtn, c);            
             c.gridx = 0;
             c.gridy = 2;
             c.gridheight = 1;
@@ -161,6 +149,7 @@ public class LeisureLog extends JFrame {
             c.gridy = 4;
             this.add(new JLabel("Room: "), c);
             c.gridy = 5;
+            i.set(0, 5, 10, 1);
             this.add(new JLabel("Tier: "), c);
             i.set(0, 1, 3, 10);
             c.anchor = GridBagConstraints.LINE_START;
@@ -173,6 +162,7 @@ public class LeisureLog extends JFrame {
             c.gridy = 4;
             this.add(rmLbl, c);
             c.gridy = 5;
+            i.set(0, 1, 10, 10);
             this.add(tierLbl, c);
         }
 
@@ -233,9 +223,9 @@ public class LeisureLog extends JFrame {
         private void remove() {
             int[] selArr = jlGrp.getSelectedIndices();
             if (dlmGrp.isEmpty()) {
-                errMessage("List Currently Empty");
+                errMessage(this, "List Currently Empty");
             } else if (selArr.length == 0) {
-                errMessage("No Selection Made");
+                errMessage(this, "No Selection Made");
             } else {
                 dlmGrp.removeRange(selArr[0], selArr[selArr.length - 1]);
             }
@@ -308,30 +298,199 @@ public class LeisureLog extends JFrame {
         }
     }
 
+    // Marine options frame
     private class OptionFrame extends JFrame {
 
         private JTabbedPane jtp = new JTabbedPane();
-        private JButton remBtn = new JButton("Remove Marine");
-        
+
         OptionFrame() {
             super("Marine Options");
-            this.setSize(300, 300);
+            this.setSize(325, 270);
             this.setLocationRelativeTo(mp);
             this.setAlwaysOnTop(true);
-            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            this.setLayout(new GridLayout(1,1));
-            
-            jtp.add("Remove", bldRemPan());
+            //this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            this.setLayout(new GridLayout(1, 1));
+            //this.setLayout(new FlowLayout());
+            jtp.add("Add Marine", new AddPanel());
+            jtp.add("Update Marine", new UpdatePanel());
+            jtp.add("Delete Marine", new RemovePanel());
+            //jtp.add("test", remBtn);
             this.add(jtp);
             this.setVisible(true);
+            this.setResizable(false);
+            this.addWindowListener(new WindowAdapter(){
+                @Override
+                public void windowClosing(WindowEvent we){
+                    close();
+                }
+            });
+            //jtp.addChangeListener(l -> tabChange());
         }
         
-        private JPanel bldRemPan(){
-            JPanel remPan = new JPanel();
-            remPan.setLayout(new BorderLayout());
-            remPan.add(new MarinePanel(),BorderLayout.CENTER);
-            remPan.add(remBtn, BorderLayout.SOUTH);
-            return remPan;
+        // close frame options
+        private void close(){
+            int i = conMessage(this, "Save Changes To Marine File?");
+            if (i == 2) return; //cancel
+            if (i == 0){ // yes save changes
+                System.out.println("Save changes");
+            }
+            System.out.println("no save");
+            this.dispose();
+        }
+
+        // Remove Marine panel 
+        private class RemovePanel extends JPanel {
+
+            private JButton remBtn = new JButton("Delete Marine");
+            private MarinePanel mpOp = new MarinePanel();
+
+            RemovePanel() {
+                this.setLayout(new BorderLayout());
+                this.add(mpOp, BorderLayout.CENTER);
+                this.add(remBtn, BorderLayout.SOUTH);
+                remBtn.addActionListener(e -> remove());
+            }
+
+            // remove button action
+            private void remove() {
+                System.out.println("remove marine");
+            }
+
+        }
+
+        // Add new Marine panel
+        private class AddPanel extends JPanel {
+
+            private JButton addBtn = new JButton("Add Marine");
+            private InfoPanel addInfoPan = new InfoPanel(false);
+
+            AddPanel() {
+                this.setLayout(new BorderLayout());
+                this.add(addInfoPan, BorderLayout.CENTER);
+                this.add(addBtn, BorderLayout.SOUTH);
+                addBtn.addActionListener(e -> add());
+            }
+
+            //add button action
+            private void add() {
+                System.out.println("add marine");
+            }
+        }
+
+        // Update Existing Marine panel
+        private class UpdatePanel extends JPanel {
+
+            private JButton upBtn = new JButton("Update Marine");
+            private InfoPanel upInfoPan = new InfoPanel(true);
+
+            UpdatePanel() {
+                this.setLayout(new BorderLayout());
+                this.add(upInfoPan, BorderLayout.CENTER);
+                this.add(upBtn, BorderLayout.SOUTH);
+                upBtn.addActionListener(e -> update());
+            }
+
+            // update button action
+            private void update() {
+                System.out.println("update marine");
+            }
+
+        }
+
+        // Panel for Marine info collection, used in both add and update panels
+        private class InfoPanel extends JPanel {
+
+            private JTextField dodTxt = new JTextField(10),
+                    firstTxt = new JTextField(10),
+                    midTxt = new JTextField(1),
+                    lastTxt = new JTextField(10),
+                    rankTxt = new JTextField(5),
+                    roomTxt = new JTextField(3);
+            private String[] tierStr = {"T1", "T2", "T3"};
+            private JComboBox tierCmb = new JComboBox(tierStr);
+            private JButton popBtn = new JButton("Populate");
+
+            InfoPanel(boolean pop) {
+                this.setLayout(new GridBagLayout());
+                GridBagConstraints c = new GridBagConstraints();
+                Insets i = new Insets(2, 5, 2, 5);
+                c.weightx = 0.5;
+                c.weighty = 0.5;
+                c.insets = i;
+                c.fill = GridBagConstraints.HORIZONTAL;
+                c.gridx = 0;
+                c.gridy = 0;
+                c.gridwidth = 2;
+                this.add(new JLabel("DODID: "), c);
+                c.gridy = 1;
+                this.add(dodTxt, c);
+                c.gridy = 2;
+                c.anchor = GridBagConstraints.PAGE_END;
+                this.add(new JLabel("Name: "), c);
+                c.gridwidth = 1;
+                c.gridy = 3;
+                this.add(firstTxt, c);
+                c.gridx = 1;
+                this.add(midTxt, c);
+                c.gridx = 2;
+                this.add(lastTxt, c);
+                c.gridx = 0;
+                c.gridy = 4;
+                c.anchor = GridBagConstraints.PAGE_START;
+                JLabel f = new JLabel("First");
+                Font font = f.getFont().deriveFont(Font.PLAIN,f.getFont().getSize()-2);
+                f.setFont(font);
+                this.add(f, c);
+                c.gridx = 1;
+                JLabel mi = new JLabel("MI");
+                mi.setFont(font);
+                this.add(mi, c);
+                c.gridx = 2;
+                JLabel last = new JLabel("Last");
+                last.setFont(font);
+                this.add(last, c);
+                c.gridx = 0;
+                c.gridwidth = 2;
+                c.gridy = 5;
+                c.anchor = GridBagConstraints.PAGE_END;
+                this.add(new JLabel("Additional Info:"), c);
+                c.gridwidth = 1;
+                c.gridy = 6;
+                this.add(rankTxt, c);
+                c.gridx = 1;
+                this.add(roomTxt, c);
+                c.gridx = 2;
+                this.add(tierCmb, c);
+                c.gridx = 0;
+                c.gridy = 7;
+                c.anchor = GridBagConstraints.PAGE_START;
+                JLabel rank = new JLabel("Rank");
+                rank.setFont(font);
+                this.add(rank, c);
+                c.gridx = 1;
+                JLabel room = new JLabel("Room");
+                room.setFont(font);
+                this.add(room, c);
+                c.gridx = 2;
+                JLabel tier = new JLabel("Tier Level");
+                tier.setFont(font);
+                this.add(tier, c);
+                if (pop) {
+                    c.anchor = GridBagConstraints.CENTER;
+                    c.gridx = 2;
+                    c.gridy = 0;
+                    c.gridwidth = 1;
+                    c.gridheight = 2;
+                    this.add(popBtn, c);
+                    popBtn.addActionListener(e -> populate());
+                }
+            }
+            
+            // populates fields with existing Marine info
+            private void populate(){
+                System.out.println("populate");
+            }
         }
     }
 
