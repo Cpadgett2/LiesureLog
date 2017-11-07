@@ -9,7 +9,7 @@ public class LogDateTime {
     
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 
-            DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy' 'HH':'mm':'ss");
+            DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy'  'HH':'mm':'ss");
     
     // construct with current date time
     LogDateTime(){

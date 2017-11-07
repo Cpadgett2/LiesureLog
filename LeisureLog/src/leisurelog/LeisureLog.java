@@ -18,10 +18,10 @@ public class LeisureLog extends JFrame {
     private MarinePanel mp = new MarinePanel();
     private ListPanel lp = new ListPanel();
     private CheckPanel cp = new CheckPanel();
-    private String[] col = {" ", "Group", "  DODID  ", "     Marine     ",
-        "Destination", "Check-Out", "Check-In"};
-    private DefaultTableModel dtm = new DefaultTableModel(col, 1);
-    private JTable table = new JTable(dtm);
+    
+    //private DefaultTableModel dtm = new DefaultTableModel(col, 1);
+    private Log log = new Log();
+    private JTable table = new JTable(log);
     private JMenuItem addMi = new JMenuItem("Marine Options"),
             exportMi = new JMenuItem("Export Log");
 
@@ -46,10 +46,12 @@ public class LeisureLog extends JFrame {
         }
         this.add(new JScrollPane(bldTopPan()), BorderLayout.NORTH);
         this.add(new JScrollPane(table), BorderLayout.CENTER);
+        table.setRowSelectionAllowed(false);
         //this.add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
         //new JScrollPane(mp),
         //new JScrollPane(new JTable(dtm))));
         this.setVisible(true);
+
     }
 
     private JPanel bldTopPan() {
@@ -168,6 +170,7 @@ public class LeisureLog extends JFrame {
 
         // get Marine from structure based on DODID entered
         private void lookup() {
+            //log.add();
         }
 
         //return marine currently on display in panel
@@ -325,6 +328,8 @@ public class LeisureLog extends JFrame {
                 return;
             }  
             lp.clear();
+            jtfDest.setText("");
+            log.chkOut(new LeisureGroup(marArr,dest,ldt));
             chkLbl.setBackground(Color.GREEN.darker());
             chkLbl.setText("<html><center>Check Out Successfull<br>" + 
                     ldt.toString() + "</html>");
@@ -335,6 +340,7 @@ public class LeisureLog extends JFrame {
             LogDateTime ldt = new LogDateTime();
             chkLbl.setText("<html><center>Check In Successfull<br>" + 
                     ldt.toString() + "</html>");
+            log.chkIn();
         }
     }
 
