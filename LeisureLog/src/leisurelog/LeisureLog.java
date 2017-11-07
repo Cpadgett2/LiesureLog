@@ -27,7 +27,7 @@ public class LeisureLog extends JFrame {
 
     LeisureLog() {
         super("Leisure Log");
-        this.setSize(650, 500);
+        this.setSize(700, 500);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JMenuBar jmb = new JMenuBar();
@@ -177,8 +177,8 @@ public class LeisureLog extends JFrame {
     // Marine group list panel
     private class ListPanel extends JPanel {
 
-        private DefaultListModel<String> dlmGrp = new DefaultListModel<>();
-        private JList<String> jlGrp = new JList<>(dlmGrp);
+        private DefaultListModel<Marine> dlmGrp = new DefaultListModel<>();
+        private JList<Marine> jlGrp = new JList<>(dlmGrp);
         private JButton addBtn = new JButton("Add To Group"),
                 remBtn = new JButton("Remove");
 
@@ -196,16 +196,13 @@ public class LeisureLog extends JFrame {
             this.add(addBtn, c);
             c.gridx = 1;
             i.set(5, 0, 0, 30);
-            //remBtn.setPreferredSize(addBtn.getPreferredSize());
             remBtn.addActionListener(e -> remove());
             this.add(remBtn, c);
             c.fill = GridBagConstraints.HORIZONTAL;
             c.gridx = 0;
             c.gridwidth = 2;
             c.gridy = 1;
-            dlmGrp.addElement("LCpl Smith1, John H 242 T2");
-            dlmGrp.addElement("LCpl Smith2, John H 242 T2");
-            dlmGrp.addElement("LCpl Smith3, John H 242 T2");
+
             jlGrp.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
             jlGrp.setVisibleRowCount(4);
             JScrollPane jsp = new JScrollPane(jlGrp);
@@ -214,9 +211,20 @@ public class LeisureLog extends JFrame {
         }
 
         //return array list of marines in group list
-        //private ArrayList<Marine> getList(){}
-        // add marine from marine panel to list
+        private Marine[] getList(){
+            Marine[] ma = new Marine[dlmGrp.size()];
+            dlmGrp.copyInto(ma);            
+            return ma;
+        }
+        
+        //clear list
+        private void clear(){
+            dlmGrp.clear();
+        }
+        
+         //add marine from marine panel to list
         private void add() {
+            dlmGrp.addElement(new Marine());
         }
 
         // remove selected entry from list
@@ -238,8 +246,8 @@ public class LeisureLog extends JFrame {
         private JButton chkInBtn = new JButton("Check In"),
                 chkOutBtn = new JButton("Check Out");
         private JTextField jtfDest = new JTextField();
-        private JLabel chkInLbl = new JLabel("Time In"),
-                chkOutLbl = new JLabel("Time Out");
+        private JLabel chkLbl = new JLabel("<html><center>Leisure Log Start<br>" + new LogDateTime().toString() + "</html>", SwingConstants.CENTER);
+               
 
         CheckPanel() {
             this.setLayout(new GridBagLayout());
@@ -283,18 +291,50 @@ public class LeisureLog extends JFrame {
             chkInBtn.addActionListener(e -> checkIn());
             this.add(chkInBtn, c);
             c.gridx = 1;
-            c.anchor = GridBagConstraints.LAST_LINE_START;
-            i.set(5, 3, 5, 10);
-            this.add(chkInLbl, c);
-            c.anchor = GridBagConstraints.FIRST_LINE_START;
             c.gridy = 3;
-            this.add(chkOutLbl, c);
+            c.gridheight = 2;
+            c.anchor = GridBagConstraints.CENTER;
+            i.set(5, 3, 5, 10);
+            Dimension d = chkInBtn.getPreferredSize();
+            chkLbl.setPreferredSize(new Dimension((int)(d.getWidth()*1.5),
+                    (int)(d.getHeight()*1.5)));
+            chkLbl.setMinimumSize(chkLbl.getPreferredSize());
+            chkLbl.setMaximumSize(chkLbl.getPreferredSize());
+            chkLbl.setOpaque(true);
+            chkLbl.setBackground(Color.GREEN.darker());
+            chkLbl.setForeground(Color.WHITE);
+            this.add(chkLbl, c);
         }
 
         private void checkOut() {
+            LogDateTime ldt = new LogDateTime();
+            Marine[] marArr = lp.getList();
+            if (marArr.length == 0) {
+                chkLbl.setText("<html><center>Check Out Failure<br>" + 
+                    ldt.toString() + "</html>");
+                chkLbl.setBackground(Color.RED);
+                errMessage(this, "No Marines In Group");
+                return;
+            }
+            String dest = jtfDest.getText().trim();
+            if (dest.isEmpty()) {
+                chkLbl.setText("<html><center>Check Out Failure<br>" + 
+                    ldt.toString() + "</html>");
+                chkLbl.setBackground(Color.RED);
+                errMessage(this, "No Destination Entered");
+                return;
+            }  
+            lp.clear();
+            chkLbl.setBackground(Color.GREEN.darker());
+            chkLbl.setText("<html><center>Check Out Successfull<br>" + 
+                    ldt.toString() + "</html>");
+            
         }
 
         private void checkIn() {
+            LogDateTime ldt = new LogDateTime();
+            chkLbl.setText("<html><center>Check In Successfull<br>" + 
+                    ldt.toString() + "</html>");
         }
     }
 
