@@ -1,8 +1,7 @@
-
 package leisurelog;
 
+public class LeisureGroup implements Comparable<LeisureGroup> {
 
-public class LeisureGroup {
     //total number of groups
     private static int grpCnt;
     // this groups id
@@ -14,42 +13,66 @@ public class LeisureGroup {
     // marine array for group members
     private final Marine[] marArr;
     // check in time arrary 1 for 1 to marine array for different check ins
-    private LogDateTime[] chkIn;
-    
+    private final LogDateTime[] chkIn;
+
     // construct from marine array of memebers, destination, and check out time
-    LeisureGroup(Marine[] ma, String dest, LogDateTime chkOut){
-        this.marArr=ma;
-        this.chkIn= new LogDateTime[ma.length];
-        this.dest=dest;
-        this.chkOut=chkOut;
+    LeisureGroup(Marine[] ma, String dest, LogDateTime chkOut) {
+        this.marArr = ma;
+        this.chkIn = new LogDateTime[ma.length];
+        this.dest = dest;
+        this.chkOut = chkOut;
         grpID = ++grpCnt;
     }
-    
+
     //getters
-    public int getID(){return grpID;}
-    public String getDestination(){return dest;}
-    public LogDateTime getChkOutTime(){return chkOut;}
-    public Marine[] getMarines(){return marArr;}
-    public int getGrpCnt(){return marArr.length;}
-    
+    public int getID() {
+        return grpID;
+    }
+
+    public String getDestination() {
+        return dest;
+    }
+
+    public LogDateTime getChkOutTime() {
+        return chkOut;
+    }
+
+    public Marine[] getMarines() {
+        return marArr;
+    }
+
+    public int getGrpCnt() {
+        return marArr.length;
+    }
+
     // gets check in time for specified marines
-    public LogDateTime getChkInTime(Marine m){
-        for (int i = 0;i<marArr.length;i++){
-            if(marArr[i].equals(m)){
+    public LogDateTime getChkInTime(Marine m) {
+        for (int i = 0; i < marArr.length; i++) {
+            if (marArr[i].equals(m)) {
                 return chkIn[i];
             }
         }
         return null;
-    }    
-    
+    }
+
     // checks in specified marine, needs checks
     // public boolean chkIn(ArrayList<Marine> mal)
-    public void chkIn(Marine m){
-        for (int i = 0;i<marArr.length;i++){
-            if(marArr[i].equals(m)){
-                chkIn[i] = new LogDateTime();
+    public void chkIn(Marine m, LogDateTime ldt) {
+        for (int i = 0; i < marArr.length; i++) {
+            if (marArr[i].equals(m)) {
+                chkIn[i] = ldt;
             }
         }
     }
     
+    @Override
+    public int compareTo(LeisureGroup lg){
+        return this.grpID - lg.getID();
+    }
+    
+    @Override
+    public String toString(){
+        return "Group " + grpID;
+    }
+
 }

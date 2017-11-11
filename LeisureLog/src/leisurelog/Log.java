@@ -2,6 +2,7 @@
 package leisurelog;
 
 import java.util.ArrayList;
+import java.util.TreeSet;
 import javax.swing.table.AbstractTableModel;
 
 
@@ -85,27 +86,33 @@ public class Log extends AbstractTableModel {
     }
     
     // adds checkout group to table
-    public void chkOut(LeisureGroup lg){
+    public LogDateTime chkOut(LeisureGroup lg){
         Marine[] ma = lg.getMarines();
         for (int i = 0; i<ma.length;i++){
             Object[] ob = {false, lg, ma[i]};
             logList.add(ob);
         } 
         super.fireTableRowsInserted(logList.size()-ma.length, logList.size());
+        return lg.getChkOutTime();
     }
     
     // calls check in for table selections
     public void chkIn(){
+        //TreeSet<LeisureGroup> ts = new TreeSet<>(); set keep track of which groups checked?
+        LogDateTime ldt = new LogDateTime();
         for (int i =0;i<logList.size();i++){
             Object[] ob = logList.get(i);
             if ((boolean)ob[0]){
                 LeisureGroup lg = (LeisureGroup)ob[1];
                 Marine m = (Marine)ob[2];
-                lg.chkIn(m);
+                lg.chkIn(m,ldt);
+                ob[0] = false; //deselect checkbox
+                super.fireTableCellUpdated(i, 0);
                 super.fireTableCellUpdated(i, 6);
             }
         }
     }
+    
     
 
 }
