@@ -1,12 +1,13 @@
 
 package leisurelog;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.TreeSet;
 import javax.swing.table.AbstractTableModel;
 
 
-public class Log extends AbstractTableModel {
+public class Log extends AbstractTableModel
+        implements Serializable {
     // columns
     private static final int colCnt = 7;
     private static final String[] col = {" ", "Group", " DODID ", "     Marine     ",
@@ -15,6 +16,7 @@ public class Log extends AbstractTableModel {
     // structure for row entries
     private ArrayList<Object[]> logList = new ArrayList<>();
     //Object[] {boolean, LeisureGroup, Marine}
+    
     
     @Override
     public int getRowCount(){

@@ -1,11 +1,12 @@
 
 package leisurelog;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 
-public class LogDateTime {
+public class LogDateTime implements Serializable {
     
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 

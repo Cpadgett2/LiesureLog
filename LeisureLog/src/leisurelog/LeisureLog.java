@@ -4,9 +4,13 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -16,8 +20,8 @@ import javax.swing.table.TableColumn;
 public class LeisureLog extends JFrame {
 
     // log table
-    private Log log = new Log();
-    private JTable table = new JTable(log);
+    private Log log;// = new Log();
+    private JTable table;// = new JTable(log);
     private JMenuItem addMi = new JMenuItem("Marine Options"),
             exportMi = new JMenuItem("Export Log");
     //inner top pannels 
@@ -33,28 +37,6 @@ public class LeisureLog extends JFrame {
         this.setSize(730, 500);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JMenuBar jmb = new JMenuBar();
-        JMenu jm = new JMenu("Admin");
-        addMi.addActionListener(e -> new OptionFrame());
-        jm.add(addMi);
-        //jm.addSeparator();
-        jm.add(exportMi);
-        jmb.add(jm);
-        this.setJMenuBar(jmb);
-        this.setLayout(new BorderLayout());
-        //this.add(mp, BorderLayout.NORTH);
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-            TableColumn tc = table.getColumnModel().getColumn(i);
-            tc.setPreferredWidth(tc.getHeaderValue().toString().length() * 10);
-        }
-        this.add(new JScrollPane(bldTopPan()), BorderLayout.NORTH);
-        this.add(new JScrollPane(table), BorderLayout.CENTER);
-        table.setRowSelectionAllowed(false);
-        //this.add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-        //new JScrollPane(mp),
-        //new JScrollPane(new JTable(dtm))));
-        //this.setVisible(true);
-
     }
 
     public static void main(String[] args) {
@@ -76,7 +58,9 @@ public class LeisureLog extends JFrame {
             }
             File mdf = new File(fileName);
             System.out.println(mdf);
-            if (!mdf.canRead()) throw new FileNotFoundException();
+            if (!mdf.canRead()) {
+                throw new FileNotFoundException();
+            }
             //ms = new MarineStructure(new File(dataFile));
         } catch (FileNotFoundException | NullPointerException e) {
             File f = chooseFile(this, "Select Marine Data File");
@@ -92,18 +76,47 @@ public class LeisureLog extends JFrame {
                 }
             }
         }
-        this.setVisible(true);
-    }
-    
-    // rewrite config file used for initialize 
-    private void writeConfig(File marineFile){
-        try(FileWriter fw = new FileWriter(new File("config"))){
-            fw.write("marine_data_file=" + marineFile.toString());
-        } catch (IOException ioe){}
+        log = recoverLog();
+        if (log == null) log = new Log();
+        table = new JTable(log);
+        bldGUI();
     }
 
-    // constructs top panel consisting of marine panel, list panel, check panel
-    private JPanel bldTopPan() {
+    // rewrite config file used for initialize 
+    private void writeConfig(File marineFile) {
+        try (FileWriter fw = new FileWriter(new File("config"))) {
+            fw.write("marine_data_file=" + marineFile.toString());
+        } catch (IOException ioe) {
+        }
+    }
+
+    // backs up active log to file
+    private void logBackup() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(
+                new FileOutputStream("log.ser"))) {
+            oos.writeInt(LeisureGroup.getGrpCnt());
+            oos.writeObject(log);            
+        } catch (IOException ioe) {
+        }
+    }
+
+    // recovers log from file
+    private Log recoverLog() {
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream("log.ser"))) {
+            LeisureGroup.setGrpCnt(ois.readInt());
+            return (Log) ois.readObject();
+        } catch (IOException exc) {
+            System.out.println(exc);
+            return null;
+        } catch (ClassNotFoundException cnf){
+            System.out.println("class not found");
+            return null;
+        }
+    }
+
+    // builds GUI 
+    private void bldGUI() {
         JPanel topPan = new JPanel();
         topPan.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
         topPan.setLayout(new GridBagLayout());
@@ -121,8 +134,31 @@ public class LeisureLog extends JFrame {
         c.gridheight = 2;
         cp.setPreferredSize(new Dimension(mp.getPreferredSize().width,
                 cp.getPreferredSize().height));
-        topPan.add(cp, c);
-        return topPan;
+        topPan.add(cp, c);        
+        //return topPan;
+        JMenuBar jmb = new JMenuBar();
+        JMenu jm = new JMenu("Admin");
+        addMi.addActionListener(e -> new OptionFrame());
+        jm.add(addMi);
+        //jm.addSeparator();
+        jm.add(exportMi);
+        jmb.add(jm);
+        this.setJMenuBar(jmb);
+        this.setLayout(new BorderLayout());
+        //this.add(mp, BorderLayout.NORTH);
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            TableColumn tc = table.getColumnModel().getColumn(i);
+            tc.setPreferredWidth(tc.getHeaderValue().toString().length() * 10);
+        }
+        this.add(new JScrollPane(topPan), BorderLayout.NORTH);
+        this.add(new JScrollPane(table), BorderLayout.CENTER);
+        table.setRowSelectionAllowed(false);
+        //this.add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+        //new JScrollPane(mp),
+        //new JScrollPane(new JTable(dtm))));
+        //this.setVisible(true);
+        //this.repaint();
+        this.setVisible(true);
     }
 
     // opens file chooser, returns file if selected, null otherwise
@@ -403,9 +439,9 @@ public class LeisureLog extends JFrame {
             //LogDateTime ldt = new LogDateTime();
             Marine[] marArr = lp.getList();
             if (marArr.length == 0) {
-               chkLbl.setText("Check Out Failure");
-               //chkLbl.setText("<html><center>Check Out Failure<br>");
-                        //+ ldt.toString() + "</html>");
+                chkLbl.setText("Check Out Failure");
+                //chkLbl.setText("<html><center>Check Out Failure<br>");
+                //+ ldt.toString() + "</html>");
                 chkLbl.setBackground(Color.RED);
                 errMessage(this, "No Marines In Group");
                 return;
@@ -413,7 +449,7 @@ public class LeisureLog extends JFrame {
             String dest = jtfDest.getText().trim();
             if (dest.isEmpty()) {
                 //chkLbl.setText("<html><center>Check Out Failure<br>"
-                        //+ ldt.toString() + "</html>");
+                //+ ldt.toString() + "</html>");
                 chkLbl.setText("Check Out Failure");
                 chkLbl.setBackground(Color.RED);
                 errMessage(this, "No Destination Entered");
@@ -422,11 +458,11 @@ public class LeisureLog extends JFrame {
             LogDateTime ldt = log.chkOut(
                     new LeisureGroup(marArr, dest, new LogDateTime()));
             lp.clear();
-            jtfDest.setText("");            
+            jtfDest.setText("");
             chkLbl.setBackground(Color.GREEN.darker());
             chkLbl.setText("<html><center>Check Out Successfull<br>"
                     + ldt.toString() + "</html>");
-
+            logBackup();
         }
 
         // calls log to check in selected  
@@ -435,6 +471,7 @@ public class LeisureLog extends JFrame {
             chkLbl.setText("<html><center>Check In Successfull<br>"
                     + ldt.toString() + "</html>");
             log.chkIn();
+            logBackup();
         }
     }
 
@@ -478,8 +515,10 @@ public class LeisureLog extends JFrame {
                     return; //cancel
                 }
                 if (i == 0) { // yes save changes
-                    File f = chooseFile(this,"Save Marine Data File");
-                    if (f == null) return;
+                    File f = chooseFile(this, "Save Marine Data File");
+                    if (f == null) {
+                        return;
+                    }
                     writeConfig(f);
                 }
                 System.out.println("no save");

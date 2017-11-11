@@ -1,6 +1,8 @@
 package leisurelog;
 
-public class LeisureGroup implements Comparable<LeisureGroup> {
+import java.io.Serializable;
+
+public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
 
     //total number of groups
     private static int grpCnt;
@@ -40,9 +42,13 @@ public class LeisureGroup implements Comparable<LeisureGroup> {
     public Marine[] getMarines() {
         return marArr;
     }
-
-    public int getGrpCnt() {
-        return marArr.length;
+    
+    public static int getGrpCnt() {
+        return grpCnt;
+    }
+    
+    public static void setGrpCnt(int i){
+        grpCnt=i;
     }
 
     // gets check in time for specified marines
