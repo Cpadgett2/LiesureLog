@@ -18,15 +18,15 @@ public class MarineStructure {
     private int marineCount;
     HashMap<Integer, Marine> hm = new HashMap<>();
 
-    MarineStructure(File file, int dodid, String firstName, String lastName, int roomNumber,
-            Rank rank, Tier tier) {
+    MarineStructure(File file){//, int dodid, String firstName, String lastName, int roomNumber,
+            //Rank rank, Tier tier) {
         
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String[] line = br.readLine().split(", ");
-        br.close();
-        if (MarineStructure Rank : line[0] ) {
+        //BufferedReader br = new BufferedReader(new FileReader(file));
+        //String[] line = br.readLine().split(", ");
+        //br.close();
+        //if (MarineStructure Rank : line[0] ) {
         
-        }
+        //}
         
         
     }
@@ -52,7 +52,7 @@ public class MarineStructure {
                 System.out.println("Reading room number: " +marine.getRoomNumber());
                 marine.setTierLevel(splitOut[5]);
                 System.out.println("Reading tier level: " +marine.getTierLevel());
-                data.add(marine);
+                //data.add(marine);
             } else {
                 System.out.println("Invalid class: " + strLine);
             }
@@ -67,9 +67,9 @@ public class MarineStructure {
         //todo
     }
     //method that searches for DODID 
-    public MarineStructure lookup() {
+    //public MarineStructure lookup() {
         //return marine;
-    }
+    //}
     
     public MarineStructure() {
         this.marineCount = 0;
@@ -85,14 +85,14 @@ public class MarineStructure {
     
     public void searchMarine() {
         String searchFor;
-        searchFor = l.getSearchBox(l.text);
-        System.out.println(searchFor);
+        //searchFor = l.getSearchBox(l.text);
+        //System.out.println(searchFor);
         
-        if (l.data.contains(searchFor)) {
+        //if (l.data.contains(searchFor)) {
             System.out.println("I FOUND IT");
-        } else {
+        //} else {
             System.out.println("I DID NOT FIND IT");
             
-        }
+       // }
     }
 }

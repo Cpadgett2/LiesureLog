@@ -5,18 +5,39 @@
  */
 package leisurelog;
 
+import java.io.Serializable;
+
 /**
  *
  * @author 1289119228A
  */
-public class Marine {
+public class Marine implements Serializable {
+
     private String rank;
     private String firstName;
     private String lastName;
     private String dodid;
     private String roomNumber;
     private String tierLevel;
-    
+
+    // following added for testing purposes only
+    // had to comment methods furthur below
+    //from here
+    static int cnt;
+    int i;
+
+    Marine() {
+        i = cnt++;
+    }
+
+    public int getDODID() {
+        return 1234567891;
+    }
+
+    public String toString() {
+        return "Marine " + i;
+    }
+     //to here all added for test...ch
     public String getRank() {
         return rank;
     }
@@ -24,7 +45,7 @@ public class Marine {
     public void setRank(String rank) {
         this.rank = rank;
     }
-    
+
     public String getFirstName() {
         return firstName;
     }
@@ -32,7 +53,7 @@ public class Marine {
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
-    
+
     public String getLastName() {
         return lastName;
     }
@@ -40,15 +61,14 @@ public class Marine {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-    
-    public String getDODID() {
-        return dodid;
-    }
 
+    //public String getDODID() {
+    //return dodid;
+    //}
     public void setDODID(String dodid) {
         this.dodid = dodid;
     }
-    
+
     public String getRoomNumber() {
         return roomNumber;
     }
@@ -56,7 +76,7 @@ public class Marine {
     public void setRoomNumber(String roomNumber) {
         this.roomNumber = roomNumber;
     }
-    
+
     public String getTierLevel() {
         return tierLevel;
     }
@@ -64,13 +84,9 @@ public class Marine {
     public void setTierLevel(String tierLevel) {
         this.tierLevel = tierLevel;
     }
-    
-    @Override
-    public String toString() {
-        return(dodid + " "+rank + " " +firstName +" " +lastName +" " +roomNumber +" " +tierLevel);
-                
-    }
-    
+
+    //@Override
+    // public String toString() {
+    //return(dodid + " "+rank + " " +firstName +" " +lastName +" " +roomNumber +" " +tierLevel);
+    //}
 }
-    
-    
