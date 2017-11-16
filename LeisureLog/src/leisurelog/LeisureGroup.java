@@ -15,7 +15,7 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
     // marine array for group members
     private final Marine[] marArr;
     // check in time arrary 1 for 1 to marine array for different check ins
-    private final LogDateTime[] chkIn;
+    private LogDateTime[] chkIn;
 
     // construct from marine array of memebers, destination, and check out time
     LeisureGroup(Marine[] ma, String dest, LogDateTime chkOut) {
