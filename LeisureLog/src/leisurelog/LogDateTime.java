@@ -29,11 +29,11 @@ public class LogDateTime implements Serializable {
     
     //getters
     public String getDate(){
-        return toString().split(" ")[0];
+        return toString().split("  ")[0];
     }
     
     public String getTime(){
-        return toString().split(" ")[1];
+        return toString().split("  ")[1];
     }
     
     public LocalDateTime getLocalDateTime(){

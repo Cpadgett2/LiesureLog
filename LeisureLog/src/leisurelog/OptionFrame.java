@@ -26,9 +26,15 @@ import javax.swing.JTextField;
         // flag for structure change
         private boolean updated = false;
         private JTabbedPane jtp = new JTabbedPane();
+        private final MarineStructure ms;
+        
+        OptionFrame(){
+            this(new MarineStructure());
+        }
 
-        OptionFrame() {
+        OptionFrame(MarineStructure ms) {            
             super("Marine Options");
+            this.ms = ms;
             this.setSize(325, 270);
             this.setLocationRelativeTo(null);
             this.setAlwaysOnTop(true);
@@ -75,11 +81,11 @@ import javax.swing.JTextField;
         private class RemovePanel extends JPanel {
 
             private JButton remBtn = new JButton("Delete Marine");
-            private LeisureLog.MarinePanel mpOp = new LeisureLog.MarinePanel();
+            private LookupPanel lkPan = new LookupPanel(ms);
 
             RemovePanel() {
                 this.setLayout(new BorderLayout());
-                this.add(mpOp, BorderLayout.CENTER);
+                this.add(lkPan, BorderLayout.CENTER);
                 this.add(remBtn, BorderLayout.SOUTH);
                 remBtn.addActionListener(e -> remove());
             }
@@ -113,6 +119,7 @@ import javax.swing.JTextField;
                     updated = true;
                 }
                 System.out.println("add marine");
+                
             }
         }
 
@@ -238,6 +245,10 @@ import javax.swing.JTextField;
                     this.add(popBtn, c);
                     popBtn.addActionListener(e -> populate());
                 }
+            }
+            
+            public Object[] getInfo(){
+                return new Object[3];
             }
 
             // Update grade for rank selection

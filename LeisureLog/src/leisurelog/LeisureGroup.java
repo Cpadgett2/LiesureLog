@@ -10,6 +10,8 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
     private final int grpID;
     //destination
     private final String dest;
+    // contact number
+    private final String contact;
     // common check out time
     private final LogDateTime chkOut;
     // marine array for group members
@@ -17,12 +19,13 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
     // check in time arrary 1 for 1 to marine array for different check ins
     private LogDateTime[] chkIn;
 
-    // construct from marine array of memebers, destination, and check out time
-    LeisureGroup(Marine[] ma, String dest, LogDateTime chkOut) {
+    // construct from marine array of memebers, destination, check out current time
+    LeisureGroup(Marine[] ma, String dest, String contact) {
         this.marArr = ma;
         this.chkIn = new LogDateTime[ma.length];
         this.dest = dest;
-        this.chkOut = chkOut;
+        this.contact = contact;
+        this.chkOut = new LogDateTime();
         grpID = ++grpCnt;
     }
 

@@ -24,12 +24,12 @@ public class LeisureLog extends JFrame {
     private JTable table;// = new JTable(log);
     private JMenuItem addMi = new JMenuItem("Marine Options"),
             exportMi = new JMenuItem("Export Log");
-    //inner top pannels 
-    private MarinePanel mp = new MarinePanel();
+    //marine stucture
+    private MarineStructure ms = new MarineStructure();
+    // top pannels 
+    private LookupPanel lkPan = new LookupPanel(ms);
     private ListPanel lp = new ListPanel();
     private CheckPanel cp = new CheckPanel();
-    //marine stucture
-    //private MarineStructure ms;
 
     //constructor
     LeisureLog() {
@@ -37,15 +37,18 @@ public class LeisureLog extends JFrame {
         this.setSize(730, 500);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        initilize();
+        bldGUI();
     }
 
     public static void main(String[] args) {
         LeisureLog ll = new LeisureLog();
-        ll.initilize();
+        //ll.initilize();
     }
 
-    // program initialization 
+    // program initialization, read Marine Data file, log recovery
     private void initilize() {
+        // attempts to read latest Marine data file from config file
         try (Scanner sc = new Scanner(new File("config"))) {
             sc.useDelimiter("=");
             String fileName = "";
@@ -61,63 +64,27 @@ public class LeisureLog extends JFrame {
             if (!mdf.canRead()) {
                 throw new FileNotFoundException();
             }
-            //ms = new MarineStructure(new File(dataFile));
+            //ms.build(new File(dataFile));
         } catch (FileNotFoundException | NullPointerException e) {
+            // if marine data not found user select
             File f = chooseFile(this, "Select Marine Data File");
             if (f != null) {
-                //ms = new MarineStructure(jfc.getSelectedFile());
+                //ms.build(jfc.getSelectedFile());
                 writeConfig(f);
                 System.out.println(f);
             } else {
                 int i = conMessage(this, "No Marine Data File Selected\n"
                         + "Go To Marine Add Window?");
                 if (i == 0) {
-                    new OptionFrame();
+                    new OptionFrame(ms);
                 }
             }
         }
         log = recoverLog();
-        if (log == null) log = new Log();
         table = new JTable(log);
-        bldGUI();
     }
 
-    // rewrite config file used for initialize 
-    public static boolean writeConfig(File marineFile) {
-        try (FileWriter fw = new FileWriter(new File("config"))) {
-            fw.write("marine_data_file=" + marineFile.toString());
-            return true;
-        } catch (IOException ioe) {
-            return false;
-        }
-    }
-
-    // backs up active log to file
-    private void logBackup() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(
-                new FileOutputStream("log.ser"))) {
-            oos.writeInt(LeisureGroup.getGrpCnt());
-            oos.writeObject(log);            
-        } catch (IOException ioe) {
-        }
-    }
-
-    // recovers log from file
-    private Log recoverLog() {
-        try (ObjectInputStream ois = new ObjectInputStream(
-                new FileInputStream("log.ser"))) {
-            LeisureGroup.setGrpCnt(ois.readInt());
-            return (Log) ois.readObject();
-        } catch (IOException exc) {
-            System.out.println(exc);
-            return null;
-        } catch (ClassNotFoundException cnf){
-            System.out.println("class not found");
-            return null;
-        }
-    }
-
-    // builds GUI 
+    // builds the GUI 
     private void bldGUI() {
         JPanel topPan = new JPanel();
         topPan.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
@@ -128,21 +95,22 @@ public class LeisureLog extends JFrame {
         c.weighty = 0.5;
         c.gridx = 0;
         c.gridy = 0;
-        topPan.add(mp, c);
+        topPan.add(lkPan, c);
         c.gridy = 1;
         topPan.add(lp, c);
         c.gridx = 1;
         c.gridy = 0;
         c.gridheight = 2;
-        cp.setPreferredSize(new Dimension(mp.getPreferredSize().width,
+        cp.setPreferredSize(new Dimension(lkPan.getPreferredSize().width,
                 cp.getPreferredSize().height));
-        topPan.add(cp, c);        
+        topPan.add(cp, c);
         //return topPan;
         JMenuBar jmb = new JMenuBar();
         JMenu jm = new JMenu("Admin");
         addMi.addActionListener(e -> new OptionFrame());
         jm.add(addMi);
         //jm.addSeparator();
+        exportMi.addActionListener(l -> exportLog());
         jm.add(exportMi);
         jmb.add(jm);
         this.setJMenuBar(jmb);
@@ -161,6 +129,52 @@ public class LeisureLog extends JFrame {
         //this.setVisible(true);
         //this.repaint();
         this.setVisible(true);
+    }    
+
+    // attempts log recovery from file, returns new log if backup empty
+    private Log recoverLog() {
+        try (ObjectInputStream ois = new ObjectInputStream(
+                new FileInputStream("log.ser"))) {
+            int backupGrpCnt = ois.readInt();
+            if (backupGrpCnt < 1) {
+                return new Log();
+            }
+            LeisureGroup.setGrpCnt(backupGrpCnt);
+            return (Log) ois.readObject();
+        } catch (IOException exc) {
+            System.out.println(exc);
+            return new Log();
+        } catch (ClassNotFoundException cnf) {
+            System.out.println("class not found");
+            return new Log();
+        }
+    }
+
+    // backs up active log to file
+    private void logBackup() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(
+                new FileOutputStream("log.ser"))) {
+            oos.writeInt(LeisureGroup.getGrpCnt());
+            oos.writeObject(log);
+        } catch (IOException ioe) {
+        }
+    }
+    
+    // calls log to publish
+    private void exportLog(){
+        String fileName = log.export();
+        logBackup();
+        infoMessage(this, "Exported to " + fileName);
+    }
+
+    // rewrite config file used for initialize 
+    public static boolean writeConfig(File marineFile) {
+        try (FileWriter fw = new FileWriter(new File("config"))) {
+            fw.write("marine_data_file=" + marineFile.toString());
+            return true;
+        } catch (IOException ioe) {
+            return false;
+        }
     }
 
     // opens file chooser, returns file if selected, null otherwise
@@ -179,135 +193,20 @@ public class LeisureLog extends JFrame {
         JOptionPane.showMessageDialog(c,
                 str, "Error", JOptionPane.ERROR_MESSAGE);
     }
+    
+    //generic info message
+    public static void infoMessage(Component c, String str) {
+        JOptionPane.showMessageDialog(c, str, "Info", 
+                JOptionPane.INFORMATION_MESSAGE);
+    }
 
     // yes no cancel question
     public static int conMessage(Component c, String str) {
         return JOptionPane.showConfirmDialog(c, str);//, "", 
         //JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
     }
-    
-    
 
-    // Marine lookup panel
-    public static class MarinePanel extends JPanel {
-
-        private JTextField jtfID = new JTextField(10);
-        private JButton lkBtn = new JButton("Lookup"),
-                clrBtn = new JButton("Clear");
-        private JLabel nameLbl = new JLabel("Roosevelt, Theodore"),
-                rankLbl = new JLabel("Rank"),
-                rmLbl = new JLabel("303"),
-                tierLbl = new JLabel("T2"),
-                idLbl = new JLabel("1234567890"),
-                grLbl = new JLabel("E3");
-
-        MarinePanel() {
-            this.setLayout(new GridBagLayout());
-            Font f = nameLbl.getFont().deriveFont(Font.PLAIN);
-            nameLbl.setFont(f);
-            rankLbl.setFont(f);
-            rmLbl.setFont(f);
-            tierLbl.setFont(f);
-            idLbl.setFont(f);
-            grLbl.setFont(f);
-            GridBagConstraints c = new GridBagConstraints();
-            Insets i = new Insets(10, 15, 0, 0);
-            c.weightx = 0.9;
-            c.weighty = 0.5;
-            c.insets = i;
-            c.gridx = 0;
-            c.gridy = 0;
-            c.anchor = GridBagConstraints.LAST_LINE_START;
-            this.add(new JLabel("Enter DODID:"), c);
-            c.weightx = 0.1;
-            c.gridx = 1;
-            this.add(Box.createHorizontalStrut(30), c);
-            c.gridx = 0;
-            c.weightx = 0.9;
-            c.gridwidth = 2;
-            c.gridy = 1;
-            c.anchor = GridBagConstraints.FIRST_LINE_START;
-            c.fill = GridBagConstraints.HORIZONTAL;
-            i.set(0, 15, 5, 0);
-            this.add(jtfID, c);
-            c.anchor = GridBagConstraints.LINE_START;
-            c.gridx = 2;
-            c.weightx = 0.1;
-            c.gridwidth = 2;
-            c.gridy = 0;
-            c.gridheight = 2;
-            i.set(5, 3, 0, 1);
-            c.fill = GridBagConstraints.NONE;
-            lkBtn.addActionListener(e -> lookup());
-            this.add(lkBtn, c);
-            c.gridwidth = 1;
-            c.gridx = 4;
-            clrBtn.setPreferredSize(lkBtn.getPreferredSize());
-            i.set(5, 0, 0, 20);
-            clrBtn.addActionListener(l -> clear());
-            this.add(clrBtn, c);
-            c.gridx = 0;
-            c.weightx = 0.9;
-            c.gridy = 2;
-            c.gridheight = 1;
-            c.anchor = GridBagConstraints.LINE_END;
-            i.set(0, 5, 3, 1);
-            this.add(new JLabel("ID: "), c);
-            c.gridy = 3;
-            this.add(new JLabel("Name: "), c);
-            c.gridy = 4;
-            this.add(new JLabel("Rank: "), c);
-            c.gridx = 2;
-            c.weightx = 0.1;
-            this.add(new JLabel("Grade: "), c);
-            c.gridx = 0;
-            c.weightx = 0.9;
-            c.gridy = 5;
-            this.add(new JLabel("Room: "), c);
-            c.gridy = 6;
-            i.set(0, 5, 10, 1);
-            this.add(new JLabel("Tier: "), c);
-            i.set(0, 1, 3, 10);
-            c.anchor = GridBagConstraints.LINE_START;
-            c.gridx = 1;
-            c.weightx = 0.1;
-            c.gridwidth = 3;
-            c.gridy = 2;
-            this.add(idLbl, c);
-            c.gridy = 3;
-            this.add(nameLbl, c);
-            c.gridwidth = 1;
-            c.gridy = 4;
-            this.add(rankLbl, c);
-            c.gridx = 3;
-            this.add(grLbl, c);
-            c.gridx = 1;
-            c.gridy = 5;
-            this.add(rmLbl, c);
-            c.gridy = 6;
-            i.set(0, 1, 10, 10);
-            this.add(tierLbl, c);
-        }
-
-        // get Marine from structure based on DODID entered
-        private void lookup() {
-            // ms.lookup(DODID)
-        }
-
-        // clears panel labels
-        private void clear() {
-            nameLbl.setText(" ");
-            rankLbl.setText(" ");
-            rmLbl.setText(" ");
-            tierLbl.setText(" ");
-            idLbl.setText(" ");
-            grLbl.setText(" ");
-        }
-        //return marine currently on display in panel
-        //private Marine getMarine(){}    
-    }
-
-    // Marine group list panel
+    // Panel builds list of Marines for check-out
     private class ListPanel extends JPanel {
 
         private DefaultListModel<Marine> dlmGrp = new DefaultListModel<>();
@@ -378,7 +277,8 @@ public class LeisureLog extends JFrame {
 
         private JButton chkInBtn = new JButton("Check In"),
                 chkOutBtn = new JButton("Check Out");
-        private JTextField jtfDest = new JTextField();
+        private JTextField jtfDest = new JTextField(),
+                jtfContact = new JTextField();
         private JLabel chkLbl = new JLabel("<html><center>Leisure Log Start<br>" + new LogDateTime().toString() + "</html>", SwingConstants.CENTER);
 
         CheckPanel() {
@@ -403,17 +303,23 @@ public class LeisureLog extends JFrame {
             }
             i.set(5, 0, 0, 10);
             c.gridy = 1;
+            c.gridwidth=1;
             c.fill = GridBagConstraints.HORIZONTAL;
             c.anchor = GridBagConstraints.LAST_LINE_START;
             this.add(new JLabel("Enter Destination:"), c);
+            c.gridx = 1;
+            this.add(new JLabel("Enter Contact Number:"),c);
+            c.gridx = 0;
             c.gridy = 2;
             c.anchor = GridBagConstraints.FIRST_LINE_START;
             i.set(0, 0, 5, 10);
             this.add(jtfDest, c);
-            c.gridwidth = 1;
+            c.gridx = 1;
+            this.add(jtfContact, c);            
+            c.gridx = 0;
             c.fill = GridBagConstraints.NONE;
             c.anchor = GridBagConstraints.FIRST_LINE_END;
-            i.set(5, 0, 5, 3);
+            i.set(5, 0, 5, 12);
             c.gridy = 3;
             chkOutBtn.addActionListener(e -> checkOut());
             this.add(chkOutBtn, c);
@@ -436,6 +342,8 @@ public class LeisureLog extends JFrame {
             chkLbl.setBackground(Color.GREEN.darker());
             chkLbl.setForeground(Color.WHITE);
             this.add(chkLbl, c);
+            jtfDest.setPreferredSize(new Dimension((int) (d.getWidth() * 1.5),
+                    jtfDest.getPreferredSize().height));
         }
 
         // gets group, time and destination, calls log checkout
@@ -459,10 +367,17 @@ public class LeisureLog extends JFrame {
                 errMessage(this, "No Destination Entered");
                 return;
             }
-            LogDateTime ldt = log.chkOut(
-                    new LeisureGroup(marArr, dest, new LogDateTime()));
+            String contact = jtfContact.getText().trim();
+            if (contact.isEmpty()) {
+                chkLbl.setText("Check Out Failure");
+                chkLbl.setBackground(Color.RED);
+                errMessage(this, "No Contact Number Entered");
+                return;
+            }
+            LogDateTime ldt = log.chkOut(marArr, dest, contact);
             lp.clear();
             jtfDest.setText("");
+            jtfContact.setText("");
             chkLbl.setBackground(Color.GREEN.darker());
             chkLbl.setText("<html><center>Check Out Successfull<br>"
                     + ldt.toString() + "</html>");
@@ -479,5 +394,4 @@ public class LeisureLog extends JFrame {
         }
     }
 
-   
 }

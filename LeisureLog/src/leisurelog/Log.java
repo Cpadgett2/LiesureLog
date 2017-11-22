@@ -9,14 +9,17 @@ import javax.swing.table.AbstractTableModel;
 public class Log extends AbstractTableModel
         implements Serializable {
     // columns
-    private static final int colCnt = 7;
-    private static final String[] col = {" ", "Group", " DODID ", "     Marine     ",
+    private static final int COLCNT = 7;
+    private static final String[] COL = {" ", "Group", " DODID ", "     Marine     ",
         "Destination", " Check-Out ", " Check-In  "};
-
+    //private final LogDateTime[] curfewDateTime; // curfew times
     // structure for row entries
     private ArrayList<Object[]> logList = new ArrayList<>();
     //Object[] {boolean, LeisureGroup, Marine}
     
+    Log(){
+        LeisureGroup.setGrpCnt(0);
+    }
     
     @Override
     public int getRowCount(){
@@ -25,7 +28,7 @@ public class Log extends AbstractTableModel
     
     @Override
     public int getColumnCount(){
-        return colCnt;
+        return COLCNT;
     }
     
     // returns object applicable to column for given row, for cell display
@@ -56,7 +59,7 @@ public class Log extends AbstractTableModel
     
     @Override
     public String getColumnName(int column){
-        return col[column];
+        return COL[column];
     }
     
     // cell render info for table
@@ -98,6 +101,11 @@ public class Log extends AbstractTableModel
         return lg.getChkOutTime();
     }
     
+    // creates new group, calls chkOut(group)
+    public LogDateTime chkOut(Marine[] marArr, String dest, String contact){
+        return chkOut(new LeisureGroup(marArr,dest,contact));
+    }
+    
     // calls check in for table selections
     public void chkIn(){
         //TreeSet<LeisureGroup> ts = new TreeSet<>(); set keep track of which groups checked?
@@ -113,6 +121,16 @@ public class Log extends AbstractTableModel
                 super.fireTableCellUpdated(i, 6);
             }
         }
+    }
+    
+    // export log to file
+    public String export(){
+        LogDateTime pubLdt = new LogDateTime();
+        String publishTime = pubLdt.getDate() + "_" + pubLdt.getTime();
+        logList = new ArrayList<>();
+        super.fireTableDataChanged();
+        LeisureGroup.setGrpCnt(0);
+        return publishTime;
     }
     
     
