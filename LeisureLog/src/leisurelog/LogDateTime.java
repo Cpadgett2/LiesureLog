@@ -10,7 +10,7 @@ public class LogDateTime implements Serializable {
     
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 
-            DateTimeFormatter.ofPattern("MM'/'dd'/'yyyy'  'HH':'mm':'ss");
+            DateTimeFormatter.ofPattern("MM'/'dd'/'yy' 'HH':'mm':'ss");
     
     // construct with current date time
     LogDateTime(){
@@ -29,11 +29,16 @@ public class LogDateTime implements Serializable {
     
     //getters
     public String getDate(){
-        return toString().split("  ")[0];
+        return toString().split(" ")[0];
     }
     
     public String getTime(){
-        return toString().split("  ")[1];
+        return toString().split(" ")[1];
+    }
+    
+    // returns date time string minus year
+    public String exYear(){
+        return getDate().substring(0, 4) + " " + getTime();
     }
     
     public LocalDateTime getLocalDateTime(){

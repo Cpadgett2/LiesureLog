@@ -17,19 +17,25 @@ import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.table.TableColumn;
 
+/**
+ * Main Frame display for logging GUI, startup actions, contains main()
+ *
+ * @author TeamLeisure
+ */
 public class LeisureLog extends JFrame {
 
-    // log table
-    private Log log;// = new Log();
-    private JTable table;// = new JTable(log);
-    private JMenuItem addMi = new JMenuItem("Marine Options"),
-            exportMi = new JMenuItem("Export Log");
     //marine stucture
     private MarineStructure ms = new MarineStructure();
+    // test add
+    {ms.add(new Marine(1234567890, Marine.Grade.E3, "Fred","P", "Savage",
+            123, Marine.Tier.T1));}
     // top pannels 
     private LookupPanel lkPan = new LookupPanel(ms);
-    private ListPanel lp = new ListPanel();
-    private CheckPanel cp = new CheckPanel();
+    private ListPanel listPan = new ListPanel();
+    private CheckPanel chkPan = new CheckPanel();
+    // log is model for table
+    private Log log;
+    private JTable table;
 
     //constructor
     LeisureLog() {
@@ -39,11 +45,12 @@ public class LeisureLog extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initilize();
         bldGUI();
+        this.setVisible(true);
     }
 
+    // main method instantiates 
     public static void main(String[] args) {
-        LeisureLog ll = new LeisureLog();
-        //ll.initilize();
+        new LeisureLog();
     }
 
     // program initialization, read Marine Data file, log recovery
@@ -60,7 +67,7 @@ public class LeisureLog extends JFrame {
                 }
             }
             File mdf = new File(fileName);
-            System.out.println(mdf);
+            //System.out.println(mdf);
             if (!mdf.canRead()) {
                 throw new FileNotFoundException();
             }
@@ -71,7 +78,7 @@ public class LeisureLog extends JFrame {
             if (f != null) {
                 //ms.build(jfc.getSelectedFile());
                 writeConfig(f);
-                System.out.println(f);
+                //System.out.println(f);
             } else {
                 int i = conMessage(this, "No Marine Data File Selected\n"
                         + "Go To Marine Add Window?");
@@ -84,52 +91,15 @@ public class LeisureLog extends JFrame {
         table = new JTable(log);
     }
 
-    // builds the GUI 
-    private void bldGUI() {
-        JPanel topPan = new JPanel();
-        topPan.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
-        topPan.setLayout(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0.5;
-        c.weighty = 0.5;
-        c.gridx = 0;
-        c.gridy = 0;
-        topPan.add(lkPan, c);
-        c.gridy = 1;
-        topPan.add(lp, c);
-        c.gridx = 1;
-        c.gridy = 0;
-        c.gridheight = 2;
-        cp.setPreferredSize(new Dimension(lkPan.getPreferredSize().width,
-                cp.getPreferredSize().height));
-        topPan.add(cp, c);
-        //return topPan;
-        JMenuBar jmb = new JMenuBar();
-        JMenu jm = new JMenu("Admin");
-        addMi.addActionListener(e -> new OptionFrame());
-        jm.add(addMi);
-        //jm.addSeparator();
-        exportMi.addActionListener(l -> exportLog());
-        jm.add(exportMi);
-        jmb.add(jm);
-        this.setJMenuBar(jmb);
-        this.setLayout(new BorderLayout());
-        //this.add(mp, BorderLayout.NORTH);
-        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-            TableColumn tc = table.getColumnModel().getColumn(i);
-            tc.setPreferredWidth(tc.getHeaderValue().toString().length() * 10);
+    // rewrite config file used for initialize 
+    public static boolean writeConfig(File marineFile) {
+        try (FileWriter fw = new FileWriter(new File("config"))) {
+            fw.write("marine_data_file=" + marineFile.toString());
+            return true;
+        } catch (IOException ioe) {
+            return false;
         }
-        this.add(new JScrollPane(topPan), BorderLayout.NORTH);
-        this.add(new JScrollPane(table), BorderLayout.CENTER);
-        table.setRowSelectionAllowed(false);
-        //this.add(new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-        //new JScrollPane(mp),
-        //new JScrollPane(new JTable(dtm))));
-        //this.setVisible(true);
-        //this.repaint();
-        this.setVisible(true);
-    }    
+    }
 
     // attempts log recovery from file, returns new log if backup empty
     private Log recoverLog() {
@@ -142,11 +112,89 @@ public class LeisureLog extends JFrame {
             LeisureGroup.setGrpCnt(backupGrpCnt);
             return (Log) ois.readObject();
         } catch (IOException exc) {
-            System.out.println(exc);
+            //System.out.println(exc);
             return new Log();
         } catch (ClassNotFoundException cnf) {
-            System.out.println("class not found");
+            //System.out.println("class not found");
             return new Log();
+        }
+    }
+
+    // add components to frame for GUI construct
+    private void bldGUI() {
+        // Menu bar construct
+        JMenuBar jmb = new JMenuBar();
+        JMenu adminMenu = new JMenu("Admin"),
+                helpMenu = new JMenu("Help");
+        JMenuItem manageMi = new JMenuItem("Marine Management"),
+                exportMi = new JMenuItem("Export Log"),
+                userMi = new JMenuItem("User Guide");
+        manageMi.addActionListener(e -> new OptionFrame(ms));
+        adminMenu.add(manageMi);
+        //jm.addSeparator();
+        exportMi.addActionListener(l -> exportLog());
+        adminMenu.add(exportMi);
+        jmb.add(adminMenu);
+        userMi.addActionListener(l -> openGuide());
+        helpMenu.add(userMi);
+        jmb.add(helpMenu);
+        this.setJMenuBar(jmb);
+        // set table column width based on header length
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            TableColumn tc = table.getColumnModel().getColumn(i);
+            tc.setPreferredWidth(tc.getHeaderValue().toString().length() * 10);
+        }
+        table.setRowSelectionAllowed(false);
+        // add top panel and table to frame
+        this.setLayout(new BorderLayout());
+        this.add(new JScrollPane(bldTopPanel()), BorderLayout.NORTH);
+        this.add(new JScrollPane(table), BorderLayout.CENTER);
+    }
+
+    // returns panel composed of lookup, list and check panels
+    private JPanel bldTopPanel() {
+        JPanel topPan = new JPanel();
+        topPan.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
+        topPan.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0.5;
+        c.weighty = 0.5;
+        c.gridx = 0;
+        c.gridy = 0;
+        topPan.add(lkPan, c); // lookup pane
+        c.gridy = 1;
+        topPan.add(listPan, c); // list pane
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridheight = 2;
+        topPan.add(chkPan, c); // check panel
+        return topPan;
+    }
+
+    // invoked with user guide menu item action, opens user guide
+    private void openGuide() {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop dt = Desktop.getDesktop();
+                File f = new File("LeisureLogUsersGuide.htm");
+                dt.browse(f.toURI());
+            } else {
+                errMessage(this, "Action Not Supported");
+            }
+        } catch (IOException ioe) {
+            errMessage(this, "User Guide Not Found");
+        }
+    }
+
+    // invoked with export menu item action, calls log to publish
+    private void exportLog() {
+        try {
+            File pubFile = log.export();
+            infoMessage(this, "Successful Exported Log To \n " + pubFile.getAbsolutePath());
+            logBackup();
+        } catch (IOException ioe) {
+            errMessage(this, "Error Attempting To Export Log\n" + ioe.getMessage());
         }
     }
 
@@ -157,23 +205,7 @@ public class LeisureLog extends JFrame {
             oos.writeInt(LeisureGroup.getGrpCnt());
             oos.writeObject(log);
         } catch (IOException ioe) {
-        }
-    }
-    
-    // calls log to publish
-    private void exportLog(){
-        String fileName = log.export();
-        logBackup();
-        infoMessage(this, "Exported to " + fileName);
-    }
-
-    // rewrite config file used for initialize 
-    public static boolean writeConfig(File marineFile) {
-        try (FileWriter fw = new FileWriter(new File("config"))) {
-            fw.write("marine_data_file=" + marineFile.toString());
-            return true;
-        } catch (IOException ioe) {
-            return false;
+            errMessage(this, "I/O Error While Attempting Log Backup");
         }
     }
 
@@ -193,27 +225,28 @@ public class LeisureLog extends JFrame {
         JOptionPane.showMessageDialog(c,
                 str, "Error", JOptionPane.ERROR_MESSAGE);
     }
-    
+
     //generic info message
     public static void infoMessage(Component c, String str) {
-        JOptionPane.showMessageDialog(c, str, "Info", 
+        JOptionPane.showMessageDialog(c, str, "Info",
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // yes no cancel question
+    // generic yes no cancel question
     public static int conMessage(Component c, String str) {
-        return JOptionPane.showConfirmDialog(c, str);//, "", 
-        //JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        return JOptionPane.showConfirmDialog(c, str);
     }
 
     // Panel builds list of Marines for check-out
     private class ListPanel extends JPanel {
 
+        // Panel componenets
         private DefaultListModel<Marine> dlmGrp = new DefaultListModel<>();
         private JList<Marine> jlGrp = new JList<>(dlmGrp);
         private JButton addBtn = new JButton("Add To Group"),
                 remBtn = new JButton("Remove");
 
+        // constructor builds panel
         ListPanel() {
             this.setLayout(new GridBagLayout());
             GridBagConstraints c = new GridBagConstraints();
@@ -234,9 +267,12 @@ public class LeisureLog extends JFrame {
             c.gridx = 0;
             c.gridwidth = 2;
             c.gridy = 1;
-
+            // list setup
             jlGrp.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
             jlGrp.setVisibleRowCount(4);
+            // dummy marine for list prototype, fix list size
+            jlGrp.setPrototypeCellValue(new Marine(1234567890, Marine.Grade.E3, 
+                    "Firstname","M", "Lastname", 123, Marine.Tier.T1));
             JScrollPane jsp = new JScrollPane(jlGrp);
             i.set(5, 20, 5, 25);
             this.add(jsp, c);
@@ -249,9 +285,15 @@ public class LeisureLog extends JFrame {
             return ma;
         }
 
-        //add marine from marine panel to list
+        // invoked with add button action, gets Marine from lkPan, adds to list
         private void add() {
-            dlmGrp.addElement(new Marine());
+            //dlmGrp.addElement(new Marine());
+            Marine m = lkPan.getMarine();
+            if (m == null) {
+                errMessage(this, "No Marine on Display");
+                return;
+            }
+            dlmGrp.addElement(m);
         }
 
         // clears list
@@ -279,7 +321,8 @@ public class LeisureLog extends JFrame {
                 chkOutBtn = new JButton("Check Out");
         private JTextField jtfDest = new JTextField(),
                 jtfContact = new JTextField();
-        private JLabel chkLbl = new JLabel("<html><center>Leisure Log Start<br>" + new LogDateTime().toString() + "</html>", SwingConstants.CENTER);
+        private JLabel chkLbl = new JLabel("<html><center>Leisure Log Start<br>"
+                + new LogDateTime().toString() + "</html>", SwingConstants.CENTER);
 
         CheckPanel() {
             this.setLayout(new GridBagLayout());
@@ -298,28 +341,28 @@ public class LeisureLog extends JFrame {
                 ImageIcon ii
                         = new ImageIcon(icon.getScaledInstance(180, 100, Image.SCALE_SMOOTH));
                 this.add(new JLabel(ii), c);
-            } catch (IOException fnfe) {
+            } catch (IOException fnfe) { //dummy box if exception with image
                 this.add(Box.createRigidArea(new Dimension(180, 100)));
             }
             i.set(5, 0, 0, 10);
             c.gridy = 1;
-            c.gridwidth=1;
+            c.gridwidth = 1;
             c.fill = GridBagConstraints.HORIZONTAL;
             c.anchor = GridBagConstraints.LAST_LINE_START;
             this.add(new JLabel("Enter Destination:"), c);
             c.gridx = 1;
-            this.add(new JLabel("Enter Contact Number:"),c);
+            this.add(new JLabel("Enter Contact Number:"), c);
             c.gridx = 0;
             c.gridy = 2;
             c.anchor = GridBagConstraints.FIRST_LINE_START;
             i.set(0, 0, 5, 10);
             this.add(jtfDest, c);
             c.gridx = 1;
-            this.add(jtfContact, c);            
+            this.add(jtfContact, c);
             c.gridx = 0;
             c.fill = GridBagConstraints.NONE;
             c.anchor = GridBagConstraints.FIRST_LINE_END;
-            i.set(5, 0, 5, 12);
+            i.set(5, 0, 5, 25);
             c.gridy = 3;
             chkOutBtn.addActionListener(e -> checkOut());
             this.add(chkOutBtn, c);
@@ -344,12 +387,13 @@ public class LeisureLog extends JFrame {
             this.add(chkLbl, c);
             jtfDest.setPreferredSize(new Dimension((int) (d.getWidth() * 1.5),
                     jtfDest.getPreferredSize().height));
+
         }
 
         // gets group, time and destination, calls log checkout
         private void checkOut() {
             //LogDateTime ldt = new LogDateTime();
-            Marine[] marArr = lp.getList();
+            Marine[] marArr = listPan.getList();
             if (marArr.length == 0) {
                 chkLbl.setText("Check Out Failure");
                 //chkLbl.setText("<html><center>Check Out Failure<br>");
@@ -369,13 +413,16 @@ public class LeisureLog extends JFrame {
             }
             String contact = jtfContact.getText().trim();
             if (contact.isEmpty()) {
+                //chkLbl.setText("<html><center>Check Out Failure<br>"
+                //+ new LogDateTime() + "</html>");
                 chkLbl.setText("Check Out Failure");
                 chkLbl.setBackground(Color.RED);
+                //this.repaint();
                 errMessage(this, "No Contact Number Entered");
                 return;
             }
             LogDateTime ldt = log.chkOut(marArr, dest, contact);
-            lp.clear();
+            listPan.clear();
             jtfDest.setText("");
             jtfContact.setText("");
             chkLbl.setBackground(Color.GREEN.darker());

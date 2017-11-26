@@ -13,21 +13,25 @@ import javax.swing.JTextField;
 /**
  *
  * Panel for lookup and display of Marine info based on DODID
+ * @author TeamLeisure
  */
 public class LookupPanel extends JPanel {
 
+    // panel components
     private JTextField jtfID = new JTextField(10);
     private JButton lkBtn = new JButton("Lookup"),
             clrBtn = new JButton("Clear");
-    private JLabel nameLbl = new JLabel("Roosevelt, Theodore"),
-            rankLbl = new JLabel("Rank"),
-            rmLbl = new JLabel("303"),
-            tierLbl = new JLabel("T2"),
-            idLbl = new JLabel("1234567890"),
-            grLbl = new JLabel("E3");
+    private JLabel nameLbl = new JLabel(""),
+            rankLbl = new JLabel(""),
+            rmLbl = new JLabel(""),
+            tierLbl = new JLabel(""),
+            idLbl = new JLabel(""),
+            grLbl = new JLabel("");
+    // marine lookup
     private final MarineStructure ms;
     private Marine marine;
 
+    // constructor builds panel
     LookupPanel(MarineStructure ms) {
         this.ms = ms;
         this.setLayout(new GridBagLayout());
@@ -117,20 +121,41 @@ public class LookupPanel extends JPanel {
         this.add(tierLbl, c);
     }
 
-    // get Marine from structure based on DODID entered
+    // invoked with lookup button action, gets Marine from Marine Structure
     private void lookup() {
-        // ms.lookup(DODID)
+        try {
+            long id = Long.parseLong(jtfID.getText());
+            marine = ms.lookup(id);
+            if (marine == null){
+                LeisureLog.errMessage(this, "Marine Not Found For DODID " + id);
+                return;
+            }
+            nameLbl.setText(marine.getName());
+            rankLbl.setText(marine.getRank());
+            rmLbl.setText(String.valueOf(marine.getRoomNumber()));
+            tierLbl.setText(marine.getTier().toString());
+            idLbl.setText(String.valueOf(marine.getDODID()));
+            grLbl.setText(marine.getGrade().toString());
+            jtfID.setText("");
+        } catch (NumberFormatException nfe) {
+            LeisureLog.errMessage(this, "Entered DODID Not Valid\n" + nfe.getMessage());
+        }
+
     }
 
-    // clears panel labels
-    private void clear() {
+    // invoked with clear button action, clears panel labels, resets marine
+    public void clear() {
         nameLbl.setText(" ");
         rankLbl.setText(" ");
         rmLbl.setText(" ");
         tierLbl.setText(" ");
         idLbl.setText(" ");
         grLbl.setText(" ");
+        marine = null;
     }
-    //return marine currently on display in panel
-    //private Marine getMarine(){}    
+
+    // returns marine currently on display in panel
+    public Marine getMarine() {
+        return marine;
+    }
 }
