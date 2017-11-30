@@ -1,2 +1,2 @@
-1111, SSgt, John, Warchol, 125, T2
-1112, SrA, Billy, Bob, 121, T1
+1111, E5,John, Warchol, 125, T2
+1112, E3, Billy, Bob, 121, T1

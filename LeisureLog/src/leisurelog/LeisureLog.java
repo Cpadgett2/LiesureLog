@@ -1,8 +1,6 @@
 package leisurelog;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,6 +13,7 @@ import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 
 /**
@@ -26,9 +25,12 @@ public class LeisureLog extends JFrame {
 
     //marine stucture
     private MarineStructure ms = new MarineStructure();
+
     // test add
-    {ms.add(new Marine(1234567890, Marine.Grade.E3, "Fred","P", "Savage",
-            123, Marine.Tier.T1));}
+    {
+        ms.add(new Marine(1234567890, Marine.Grade.E4, "Fred", "P", "Savage",
+                123, Marine.Tier.T1));
+    }
     // top pannels 
     private LookupPanel lkPan = new LookupPanel(ms);
     private ListPanel listPan = new ListPanel();
@@ -67,16 +69,12 @@ public class LeisureLog extends JFrame {
                 }
             }
             File mdf = new File(fileName);
-            //System.out.println(mdf);
-            if (!mdf.canRead()) {
-                throw new FileNotFoundException();
-            }
-            //ms.build(new File(dataFile));
-        } catch (FileNotFoundException | NullPointerException e) {
+            ms.build(mdf);
+        } catch (NullPointerException  | IOException e) {
             // if marine data not found user select
             File f = chooseFile(this, "Select Marine Data File");
             if (f != null) {
-                //ms.build(jfc.getSelectedFile());
+                //ms.build(f);
                 writeConfig(f);
                 //System.out.println(f);
             } else {
@@ -139,12 +137,13 @@ public class LeisureLog extends JFrame {
         helpMenu.add(userMi);
         jmb.add(helpMenu);
         this.setJMenuBar(jmb);
-        // set table column width based on header length
+        // table setup
         for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
             TableColumn tc = table.getColumnModel().getColumn(i);
             tc.setPreferredWidth(tc.getHeaderValue().toString().length() * 10);
         }
         table.setRowSelectionAllowed(false);
+        table.setDefaultRenderer(LogDateTime.class, new LogTimeRenderer());
         // add top panel and table to frame
         this.setLayout(new BorderLayout());
         this.add(new JScrollPane(bldTopPanel()), BorderLayout.NORTH);
@@ -271,8 +270,8 @@ public class LeisureLog extends JFrame {
             jlGrp.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
             jlGrp.setVisibleRowCount(4);
             // dummy marine for list prototype, fix list size
-            jlGrp.setPrototypeCellValue(new Marine(1234567890, Marine.Grade.E3, 
-                    "Firstname","M", "Lastname", 123, Marine.Tier.T1));
+            jlGrp.setPrototypeCellValue(new Marine(1234567890, Marine.Grade.E3,
+                    "Firstname", "M", "Lastname", 123, Marine.Tier.T1));
             JScrollPane jsp = new JScrollPane(jlGrp);
             i.set(5, 20, 5, 25);
             this.add(jsp, c);
@@ -291,6 +290,10 @@ public class LeisureLog extends JFrame {
             Marine m = lkPan.getMarine();
             if (m == null) {
                 errMessage(this, "No Marine on Display");
+                return;
+            }
+            if (dlmGrp.contains(m)) {
+                errMessage(this, "Marine Already in Group");
                 return;
             }
             dlmGrp.addElement(m);
@@ -390,22 +393,17 @@ public class LeisureLog extends JFrame {
 
         }
 
-        // gets group, time and destination, calls log checkout
+        // gets marines, time and destination, calls log checkout
         private void checkOut() {
-            //LogDateTime ldt = new LogDateTime();
             Marine[] marArr = listPan.getList();
             if (marArr.length == 0) {
                 chkLbl.setText("Check Out Failure");
-                //chkLbl.setText("<html><center>Check Out Failure<br>");
-                //+ ldt.toString() + "</html>");
                 chkLbl.setBackground(Color.RED);
                 errMessage(this, "No Marines In Group");
                 return;
             }
             String dest = jtfDest.getText().trim();
             if (dest.isEmpty()) {
-                //chkLbl.setText("<html><center>Check Out Failure<br>"
-                //+ ldt.toString() + "</html>");
                 chkLbl.setText("Check Out Failure");
                 chkLbl.setBackground(Color.RED);
                 errMessage(this, "No Destination Entered");
@@ -413,15 +411,20 @@ public class LeisureLog extends JFrame {
             }
             String contact = jtfContact.getText().trim();
             if (contact.isEmpty()) {
-                //chkLbl.setText("<html><center>Check Out Failure<br>"
-                //+ new LogDateTime() + "</html>");
                 chkLbl.setText("Check Out Failure");
                 chkLbl.setBackground(Color.RED);
-                //this.repaint();
                 errMessage(this, "No Contact Number Entered");
                 return;
             }
-            LogDateTime ldt = log.chkOut(marArr, dest, contact);
+            LogDateTime ldt;
+            try {
+                ldt = log.chkOut(marArr, dest, contact);
+            } catch (CheckoutException ce) {
+                chkLbl.setText("Check Out Failure");
+                chkLbl.setBackground(Color.RED);
+                errMessage(this, ce.getMessage() + "\n" + ce.getMarine());
+                return;
+            }
             listPan.clear();
             jtfDest.setText("");
             jtfContact.setText("");
@@ -438,6 +441,24 @@ public class LeisureLog extends JFrame {
                     + ldt.toString() + "</html>");
             log.chkIn();
             logBackup();
+        }
+    }
+
+    private class LogTimeRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object Value,
+                boolean isSelected, boolean hasFocus, int row, int col) {
+            Component c = super.getTableCellRendererComponent(table, Value,
+                    isSelected, hasFocus, row, col);
+            JLabel label = (JLabel) c;
+            if (log.hasFlag(row)) {
+                label.setBackground(Color.red);
+            } else {
+                label.setBackground(table.getBackground());
+            }
+            label.setHorizontalAlignment(SwingConstants.RIGHT);
+            return label;
         }
     }
 

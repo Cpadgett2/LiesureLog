@@ -13,16 +13,13 @@ public class Marine implements Serializable {
     private int marineNum;
     private Grade grade;
     private Tier tier;
-    private String firstName;
-    private String midName;
-    private String lastName;
-    private long dodid;
     private int roomNumber;
-
-    Marine() {
-        marineNum = cnt++;
-    }
+    private final String firstName;
+    private final String midName;
+    private final String lastName;
+    private final long dodid;
     
+
     Marine(long id, Grade grade, String firstName, String mid,
             String lastName, int room, Tier tier ){
         this.dodid = id;
@@ -34,10 +31,17 @@ public class Marine implements Serializable {
         this.tier = tier;
         marineNum = cnt++;
     }
-
-    public Marine(int dodid) {
+    
+    Marine(long id, Grade grade, String firstName,
+            String lastName, int room, Tier tier ){
+        this.dodid = id;
+        this.grade = grade;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.roomNumber = room;
+        this.tier = tier;
+        this.midName = "";
         marineNum = cnt++;
-        this.dodid = dodid;
     }
 
     public enum Grade {
@@ -48,16 +52,6 @@ public class Marine implements Serializable {
         T1, T2, T3
     }
 
-    // test purposes
-    public void test() {
-        System.out.println(dodid);
-        System.out.println(grade);
-        System.out.println(firstName);
-        System.out.println(lastName);
-        System.out.println(roomNumber);
-        System.out.println(tier);
-    }
-
     public long getDODID() {
         return dodid;
     }
@@ -66,24 +60,12 @@ public class Marine implements Serializable {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-    
     public String getMid(){
         return midName;
     }
 
     public String getLastName() {
         return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public void setDODID(int dodid) {
-        this.dodid = dodid;
     }
 
     public int getRoomNumber() {
@@ -133,7 +115,5 @@ public class Marine implements Serializable {
     @Override
     public String toString() {
         return getRank() + " " + getName() + " " + roomNumber + " " + tier; 
-        //return "Marine " + marineNum;
-        //return(dodid + " "+rank + " " +firstName +" " +lastName +" " +roomNumber +" " +tierLevel);
     }
 }

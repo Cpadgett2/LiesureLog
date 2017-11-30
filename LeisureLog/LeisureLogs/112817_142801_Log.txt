@@ -1,0 +1,10 @@
+Leisure Log
+Published: 11/28/17 14:28:01
+Duty: 
+Entries: 2
+Flags: 0
+
+ Group |      DODID |                    Marine |           Desination |            Check-Out |             Check-In |
+------------------------------------------------------------------------------------------------------------------
+     1 | 1234567890 | LCpl Savage, Fred P 123 T1 |          destination |    11/28/17 14:18:10 |    11/28/17 14:18:46 |
+     3 | 1234567890 | LCpl Savage, Fred P 123 T1 |          destination |    11/28/17 14:18:50 |                 null |
