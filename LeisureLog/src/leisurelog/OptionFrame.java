@@ -10,6 +10,7 @@ import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -21,6 +22,7 @@ import javax.swing.JTextField;
 
 class OptionFrame extends JFrame {
 
+    private static final long serialVersionUID = 7308024742648619776L;
     // flag for structure change
     private boolean updated = false;
     private JTabbedPane jtp = new JTabbedPane();
@@ -58,17 +60,21 @@ class OptionFrame extends JFrame {
     private void close() {
         if (updated) {
             int i = LeisureLog.conMessage(this, "Save Changes To Marine File?");
-            if (i == 2) {
-                return; //cancel
-            }
             if (i == 0) { // yes save changes
-                File f = LeisureLog.chooseFile(this, "Save Marine Data File");
+                File f = LeisureLog.chooseFile(this, "Save To File");
                 if (f == null) {
                     return;
                 }
-                LeisureLog.writeConfig(f);
+                try {
+                    ms.toFile(f);
+                    LeisureLog.setMarineFile(f.toPath());
+                    LeisureLog.writeConfig();
+                } catch (IOException ioe) {
+                    LeisureLog.errMessage(this,
+                            "Unable To Export Marine Structure\n"
+                            + ioe.getMessage());
+                }
             }
-            //System.out.println("no save");
         }
         this.dispose();
     }
@@ -76,6 +82,7 @@ class OptionFrame extends JFrame {
     // Remove Marine panel 
     private class RemovePanel extends JPanel {
 
+        private static final long serialVersionUID = -8506621070511999012L;
         private JButton remBtn = new JButton("Delete Marine");
         private LookupPanel lkPan = new LookupPanel(ms);
 
@@ -110,6 +117,7 @@ class OptionFrame extends JFrame {
     // Add new Marine panel
     private class AddPanel extends JPanel {
 
+        private static final long serialVersionUID = -4710847913264633731L;
         private JButton addBtn = new JButton("Add Marine");
         private InfoPanel infoPan = new InfoPanel(false);
 
@@ -146,6 +154,7 @@ class OptionFrame extends JFrame {
     // Update Existing Marine panel
     private class UpdatePanel extends JPanel {
 
+        private static final long serialVersionUID = -1935787367895541868L;
         private JButton upBtn = new JButton("Update Marine");
         private InfoPanel upInfoPan = new InfoPanel(true);
 
@@ -178,6 +187,7 @@ class OptionFrame extends JFrame {
     // Panel for Marine info collection, used in both add and update panels
     private class InfoPanel extends JPanel {
 
+        private static final long serialVersionUID = 6517781526856784060L;
         private JTextField dodTxt = new JTextField(10),
                 firstTxt = new JTextField(10),
                 midTxt = new JTextField(1),
@@ -185,8 +195,8 @@ class OptionFrame extends JFrame {
                 roomTxt = new JTextField(3);
         private final String[] tierStr = {"T1", "T2", "T3"};
         private final String[] rankStr = {"Pvt", "PFC", "LCpl", "Cpl", "Sgt"};
-        private JComboBox tierCmb = new JComboBox(tierStr),
-                rankCmb = new JComboBox(rankStr);
+        private JComboBox<String> tierCmb = new JComboBox<>(tierStr),
+                rankCmb = new JComboBox<>(rankStr);
         private JButton popBtn = new JButton("Populate");
         private JLabel grLbl = new JLabel("E1");
         private Marine marine;

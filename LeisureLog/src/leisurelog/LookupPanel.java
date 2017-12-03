@@ -16,7 +16,7 @@ import javax.swing.JTextField;
  * @author TeamLeisure
  */
 public class LookupPanel extends JPanel {
-
+    private static final long serialVersionUID = 5471409722811675464L;
     // panel components
     private JTextField jtfID = new JTextField(10);
     private JButton lkBtn = new JButton("Lookup"),
@@ -61,6 +61,7 @@ public class LookupPanel extends JPanel {
         c.anchor = GridBagConstraints.FIRST_LINE_START;
         c.fill = GridBagConstraints.HORIZONTAL;
         i.set(0, 15, 5, 0);
+        jtfID.addActionListener(l -> lookup());
         this.add(jtfID, c);
         c.anchor = GridBagConstraints.LINE_START;
         c.gridx = 2;

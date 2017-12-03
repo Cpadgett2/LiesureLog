@@ -1,6 +1,8 @@
 package leisurelog;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -11,18 +13,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import javax.swing.table.AbstractTableModel;
 
-public class Log extends AbstractTableModel
-        implements Serializable {
-
+public class Log extends AbstractTableModel {
+    private static final long serialVersionUID = -2814358752748728351L;
     // columns
-    private static final int COLCNT = 7;
-    private static final String[] COL = {" ", "Group", " DODID ", "     Marine     ",
-        "Destination", " Check-Out ", " Check-In  "};
-    //private final LogDateTime[] curfewDateTime; // curfew times
+    private static final int COLCNT = 8;
+    private static final String[] COL = {"  ", "Group", "  DODID  ", "      Marine      ",
+        " Destination ", " Contact ", " Check-Out ", " Check-In  "};
     // structure for row entries
-    //private ArrayList<Object[]> logList = new ArrayList<>();
     private ArrayList<Log.Entry> logList = new ArrayList<>();
-    //Object[] {boolean, LeisureGroup, Marine}
+    private int flagCnt;
     // keep track of checked out marines
     private HashSet<Marine> outMarines = new HashSet<>();
 
@@ -43,31 +42,23 @@ public class Log extends AbstractTableModel
     // returns object applicable to column for given row, for cell display
     @Override
     public Object getValueAt(int row, int column) {
-        //Object[] ob = logList.get(row);
-        //LeisureGroup lg = (LeisureGroup) ob[1];
-        //Marine m = (Marine) ob[2];
         Log.Entry entry = logList.get(row);
         switch (column) {
             case 0:
-                //return ob[0];
                 return entry.isSelected();
             case 1:
-                //return lg.getID();
                 return entry.getGroup().getID();
             case 2:
-                //return m.getDODID();
                 return entry.getMarine().getDODID();
             case 3:
-                //return m;
                 return entry.getMarine();
             case 4:
-                //return lg.getDestination();
                 return entry.getGroup().getDestination();
             case 5:
-                //return lg.getChkOutTime();
-                return entry.getGroup().getChkOutTime();
+                return entry.getGroup().getContact();
             case 6:
-                //return lg.getChkInTime(m);
+                return entry.getGroup().getChkOutTime();
+            case 7:
                 return entry.getGroup().getChkInTime(entry.getMarine());
             default:
                 return null;
@@ -81,10 +72,10 @@ public class Log extends AbstractTableModel
 
     // cell render info for table
     @Override
-    public Class getColumnClass(int column) {
+    public Class<?> getColumnClass(int column) {
         if (column == 0) {
             return Boolean.class;
-        } else if (column == 6) {
+        } else if (column == 7) {
             return LogDateTime.class;
         } else {
             return Integer.class;
@@ -112,7 +103,6 @@ public class Log extends AbstractTableModel
     @Override
     public void setValueAt(Object value, int row, int col) {
         if (col == 0) {
-            //logList.get(row)[0] = value;
             logList.get(row).setSelect((boolean) value);
             super.fireTableCellUpdated(row, col);
         }
@@ -152,15 +142,12 @@ public class Log extends AbstractTableModel
             logList.add(new Log.Entry(m, lg));
             outMarines.add(m);
         }
-        //for (int i = 0; i < ma.length; i++) {
-        //Object[] ob = {false, lg, ma[i]};
-        //logList.add(ob);
-
-        //}
         super.fireTableRowsInserted(logList.size() - ma.length, logList.size());
         return lg;
     }
 
+     
+    
     // calls check in for table selections
     public void chkIn() {
         LogDateTime ldt = new LogDateTime();
@@ -169,69 +156,132 @@ public class Log extends AbstractTableModel
                 entry.getGroup().chkIn(entry.getMarine(), ldt);
                 entry.setSelect(false);
                 // if passed curfew
-                entry.setFlag(true);
+                LogDateTime[] curfew = 
+                        entry.getGroup().getChkOutTime().getCurfews();
+                if (ldt.isAfter(curfew[1])){
+                    entry.setFlag(true);
+                    flagCnt++;
+                }
+                Marine m = entry.getMarine();
+                if (ldt.isAfter(curfew[0])){
+                    if ((m.getGrade() != Marine.Grade.E4 && 
+                            m.getGrade() != Marine.Grade.E5) || 
+                            m.getTier() != Marine.Tier.T1){
+                       entry.setFlag(true); 
+                       flagCnt++;
+                    }
+                }
                 outMarines.remove(entry.getMarine());
             }
         }
         super.fireTableRowsUpdated(0, logList.size());
-        //for (int i = 0; i < logList.size(); i++) {
-        //  Object[] ob = logList.get(i);
-        //if ((boolean) ob[0]) {
-        //  LeisureGroup lg = (LeisureGroup) ob[1];
-        //Marine m = (Marine) ob[2];
-        //lg.chkIn(m, ldt);
-        //ob[0] = false; //deselect checkbox
-        //super.fireTableCellUpdated(i, 0);
-        //super.fireTableCellUpdated(i, 6);
-        //}
-        // }
     }
 
-    // export log to file
-    public File export()
+    // publish log to files
+    public File[] export(Marine duty, Path directory)
             throws IOException {
         LogDateTime pubLdt = new LogDateTime();
         String publishTime = pubLdt.getDate().replaceAll("/", "") + "_"
                 + pubLdt.getTime().replaceAll(":", "");
-        Path dir = Paths.get("LeisureLogs");
-        if (!Files.isDirectory(dir)) {
-            Files.createDirectory(dir);
+        Path filePath = Paths.get(directory.toString(), 
+                "log_" + publishTime);
+        File[] exportFiles = new File[2];
+        // call to publish to csv
+        exportFiles[0] = toCSV(filePath,pubLdt,duty);
+        // call to publish to text
+        exportFiles[1] = toTxt(filePath,pubLdt,duty);
+        File archive = Paths.get(directory.toString(),"log_archive.csv").toFile();
+        archive.setWritable(true);
+        // call to archive log
+        appendEntries(archive);
+        // set permissions
+        archive.setWritable(false, false);
+        for (File f: exportFiles){
+            f.setWritable(false, false);
+            f.setReadOnly();
         }
-        File f = Paths.get(dir.toString(), publishTime + "_Log.txt").toFile();
-        PrintWriter pw = new PrintWriter(f);
+        // reset log
+        logList = new ArrayList<>();
+        flagCnt = 0;
+        LeisureGroup.setGrpCnt(0);
+        super.fireTableDataChanged();        
+        return exportFiles;
+    }
+    
+    // publishes text file variation of log
+    private File toTxt(Path filePath, LogDateTime pubTime, Marine duty)
+            throws IOException {
+        File file = Paths.get(filePath.toString() + ".txt").toFile();
+        PrintWriter pw = new PrintWriter(file);
         pw.println("Leisure Log");
-        pw.println("Published: " + pubLdt);
-        pw.println("Duty: "); // + on duty marine;
+        pw.println("Published: " + pubTime);
+        pw.println("Duty: " + duty);
         pw.println("Entries: " + logList.size());
-        pw.println("Flags: " + 0);
+        pw.println("Flags: " + flagCnt);
         pw.println();
-        pw.printf("%6s | %10s | %25s | %20s | %20s | %20s |%n", "Group", "DODID", "Marine", "Desination",
-                "Check-Out", "Check-In");
-        pw.println(String.format("%114s", "").replace(' ', '-'));
+        pw.printf("%6s | %10s | %30s | %20s | %18s | %18s |", "Group", "DODID", 
+                "Marine", "Desination","Check-Out", "Check-In");
+        pw.println();
+        pw.println(String.format("%118s", "").replace(' ', '-'));
         for (int i = 0; i < logList.size(); i++) {
-            pw.printf("%6s | %10s | %25s | %20s | %20s | %20s |%n",
+            pw.printf("%6s | %10s | %30s | %20s | %18s | %18s | ",
                     getValueAt(i, 1), getValueAt(i, 2), getValueAt(i, 3),
-                    getValueAt(i, 4), getValueAt(i, 5), getValueAt(i, 6));
+                    getValueAt(i, 4), getValueAt(i, 6), getValueAt(i, 7));
+            if (logList.get(i).hasFlag()){
+                pw.printf("%s", "Late Check-In");
+            } 
+                pw.println();          
         }
         pw.close();
-        f.setReadOnly();
-        logList = new ArrayList<>();
-        super.fireTableDataChanged();
-        LeisureGroup.setGrpCnt(0);
-        return f;
+        return file;
     }
+    
+    // publishes csv variation of log
+    private File toCSV(Path filePath, LogDateTime pubTime, Marine duty)
+            throws IOException {
+        File file = Paths.get(filePath.toString() + ".csv").toFile();
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+        bw.write("Leisure Log" + System.lineSeparator());
+        bw.write("Published: " + pubTime + System.lineSeparator());
+        bw.write("Duty: " + duty.toString().replaceAll(",", "")
+                + System.lineSeparator());
+        bw.write("Entries: " + logList.size() + System.lineSeparator());
+        bw.write("Flags: " + flagCnt + System.lineSeparator());
+        bw.write(System.lineSeparator());
+        bw.write("Group,DODID,Marine,Destination,Check-In,Check-Out" 
+                + System.lineSeparator());
+        bw.close();
+        appendEntries(file);
+        return file;
+    }
+    
+    // appends entries to file parameter
+    private void appendEntries(File file)
+            throws IOException {
+        boolean exists = Files.exists(file.toPath());
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file,true));
+        if (!exists) {
+            bw.write("Group,DODID,Marine,Destination,Check-In,Check-Out" 
+                + System.lineSeparator());
+        }
+        for (Entry e: logList){
+            bw.write(e.toString());
+            bw.write(System.lineSeparator());
+        }
+        bw.close();
+    }
+    
 
+    // inner class is Entry for Log
     private static class Entry implements Serializable {
-
+        private static final long serialVersionUID = -4399433595070230812L;
         private final Marine m;
         private final LeisureGroup lg;
-        private boolean flag, selected;
-
+        private boolean selected = false, lateFlag = false;
+        
         Entry(Marine m, LeisureGroup lg) {
             this.m = m;
             this.lg = lg;
-            selected = false;
-            flag = false;
         }
 
         //getters
@@ -248,8 +298,9 @@ public class Log extends AbstractTableModel
         }
 
         public boolean hasFlag() {
-            return flag;
+            return lateFlag;
         }
+        
 
         //setters
         public void setSelect(boolean select) {
@@ -257,8 +308,21 @@ public class Log extends AbstractTableModel
         }
 
         public void setFlag(boolean flag) {
-            this.flag = flag;
+            this.lateFlag = flag;
+        }
+        
+        @Override
+        public String toString(){
+            String str = lg.getID() + "," + m.getDODID() + "," 
+                    + m.toString().replaceAll(",", "") + "," 
+                    + lg.getDestination() + "," //+ lg.getContact() + "," 
+                    + lg.getChkOutTime() + "," + lg.getChkInTime(m);
+            if (lateFlag) {
+                str = str + ",Late Check-In";
+            }
+            return str;
         }
     }
+     
 
 }

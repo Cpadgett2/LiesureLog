@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author TeamLeisure
  */
 public class Marine implements Serializable {
-
+    private static final long serialVersionUID = -5901364777177774222L;
     private static int cnt;
     private int marineNum;
     private Grade grade;
@@ -112,6 +112,11 @@ public class Marine implements Serializable {
         return lastName + ", " + firstName + " " + midName;
     }
 
+    public String toFileString(){
+        return String.format("%s,%s,%s,%s,%s,%s,%s%n", dodid,grade,firstName,
+                midName,lastName,roomNumber,tier);
+    }
+    
     @Override
     public String toString() {
         return getRank() + " " + getName() + " " + roomNumber + " " + tier; 

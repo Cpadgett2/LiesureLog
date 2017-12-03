@@ -7,14 +7,14 @@ import java.time.format.DateTimeFormatter;
 
 
 public class LogDateTime implements Serializable {
-    
+    private static final long serialVersionUID = -1302152153289478928L;
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 
             DateTimeFormatter.ofPattern("MM'/'dd'/'yy' 'HH':'mm':'ss");
     
     // construct with current date time
     LogDateTime(){
-        ldt = LocalDateTime.parse(LocalDateTime.now().format(dtf), dtf);
+        ldt = LocalDateTime.now();
     }
     
     // construct with string specifying date and time
@@ -25,6 +25,10 @@ public class LogDateTime implements Serializable {
     // construct with date string and time string
     LogDateTime(String date, String time){
         ldt = LocalDateTime.parse(date + ' ' + time, dtf);
+    }
+    
+    LogDateTime(LocalDateTime ldt){
+        this.ldt = ldt;
     }
     
     //getters
@@ -43,6 +47,15 @@ public class LogDateTime implements Serializable {
     
     public LocalDateTime getLocalDateTime(){
         return ldt;
+    }
+    
+    // returns the 2 curfew times for this logdatetime
+    public LogDateTime[] getCurfews(){
+        LogDateTime tomorrow = new LogDateTime(ldt.plusDays(1));
+        LogDateTime[] curfews = new LogDateTime[2];
+        curfews[0] = new LogDateTime(tomorrow.getDate(),"00:00:00");
+        curfews[1] = new LogDateTime(tomorrow.getDate(),"01:00:00");
+        return curfews;
     }
     
     // returns string of todays date

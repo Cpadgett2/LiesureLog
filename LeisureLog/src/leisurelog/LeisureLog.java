@@ -3,12 +3,15 @@ package leisurelog;
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -23,14 +26,9 @@ import javax.swing.table.TableColumn;
  */
 public class LeisureLog extends JFrame {
 
+    private static final long serialVersionUID = 6507332290704320252L;
     //marine stucture
     private MarineStructure ms = new MarineStructure();
-
-    // test add
-    {
-        ms.add(new Marine(1234567890, Marine.Grade.E4, "Fred", "P", "Savage",
-                123, Marine.Tier.T1));
-    }
     // top pannels 
     private LookupPanel lkPan = new LookupPanel(ms);
     private ListPanel listPan = new ListPanel();
@@ -38,65 +36,76 @@ public class LeisureLog extends JFrame {
     // log is model for table
     private Log log;
     private JTable table;
+    private static Path logDirectoryPath, marineFilePath;
 
     //constructor
-    LeisureLog() {
+    LeisureLog() throws IOException {
         super("Leisure Log");
-        this.setSize(730, 500);
+        this.setSize(750, 500);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initilize();
         bldGUI();
         this.setVisible(true);
+        //new ConfigFrame();
     }
 
     // main method instantiates 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         new LeisureLog();
     }
 
     // program initialization, read Marine Data file, log recovery
     private void initilize() {
-        // attempts to read latest Marine data file from config file
-        try (Scanner sc = new Scanner(new File("config"))) {
-            sc.useDelimiter("=");
-            String fileName = "";
+        // attempts to read from config file
+        try (Scanner sc = new Scanner(new File("log.ini"))) {
+            String marineFile = "", logDirectory = "";
             while (sc.hasNextLine()) {
-                if (sc.next().equalsIgnoreCase("marine_data_file")) {
-                    if (sc.hasNext()) {
-                        fileName = sc.next();
+                String[] str = sc.nextLine().split("=");
+                if (str[0].equalsIgnoreCase("marine_data_file")) {
+                    if (str.length == 2) {
+                        marineFile = str[1].trim();
+                    }
+                } else if (str[0].equalsIgnoreCase("log_directory")) {
+                    if (str.length == 2) {
+                        logDirectory = str[1].trim();
                     }
                 }
             }
-            File mdf = new File(fileName);
-            ms.build(mdf);
-        } catch (NullPointerException  | IOException e) {
-            // if marine data not found user select
-            File f = chooseFile(this, "Select Marine Data File");
-            if (f != null) {
-                //ms.build(f);
-                writeConfig(f);
-                //System.out.println(f);
-            } else {
-                int i = conMessage(this, "No Marine Data File Selected\n"
-                        + "Go To Marine Add Window?");
-                if (i == 0) {
-                    new OptionFrame(ms);
-                }
+            marineFilePath = Paths.get(marineFile);
+            logDirectoryPath = Paths.get(logDirectory);
+            boolean configFlag = false;
+
+            // if paths were read check validity
+            if (!Files.isReadable(marineFilePath)) {
+                errMessage(this, "Error Reading Marine Data File\n"
+                        + marineFilePath.toString());
+                configFlag = true;
+                marineFilePath = null;
             }
+            if (!Files.isDirectory(logDirectoryPath)
+                    || logDirectoryPath.toString().isEmpty()) {
+                errMessage(this, "Unable To Find Log Directory\n"
+                        + logDirectoryPath.toString());
+                configFlag = true;
+                logDirectoryPath = null;
+            }
+
+            // if problem with file display config frame
+            if (configFlag) {
+                new ConfigFrame(ms);
+            } else {
+                ms.build(marineFilePath.toFile());
+            }
+        } catch (NullPointerException | IOException e) {
+            // if proble reading config file display config frame
+            errMessage(this, "Problem Reading Initialization Files\n"
+                    + e.getMessage());
+            new ConfigFrame(ms);
         }
+        // recover log, set table model
         log = recoverLog();
         table = new JTable(log);
-    }
-
-    // rewrite config file used for initialize 
-    public static boolean writeConfig(File marineFile) {
-        try (FileWriter fw = new FileWriter(new File("config"))) {
-            fw.write("marine_data_file=" + marineFile.toString());
-            return true;
-        } catch (IOException ioe) {
-            return false;
-        }
     }
 
     // attempts log recovery from file, returns new log if backup empty
@@ -125,11 +134,14 @@ public class LeisureLog extends JFrame {
         JMenu adminMenu = new JMenu("Admin"),
                 helpMenu = new JMenu("Help");
         JMenuItem manageMi = new JMenuItem("Marine Management"),
-                exportMi = new JMenuItem("Export Log"),
-                userMi = new JMenuItem("User Guide");
+                exportMi = new JMenuItem("Publish Log"),
+                userMi = new JMenuItem("User Guide"),
+                configMi = new JMenuItem("Configuration");
         manageMi.addActionListener(e -> new OptionFrame(ms));
         adminMenu.add(manageMi);
-        //jm.addSeparator();
+        configMi.addActionListener(l -> configAction());
+        adminMenu.add(configMi);
+        adminMenu.addSeparator();
         exportMi.addActionListener(l -> exportLog());
         adminMenu.add(exportMi);
         jmb.add(adminMenu);
@@ -171,6 +183,12 @@ public class LeisureLog extends JFrame {
         return topPan;
     }
 
+    // GUI component actions
+    // invoked with config menu item action
+    private void configAction() {
+        new ConfigFrame(ms);
+    }
+
     // invoked with user guide menu item action, opens user guide
     private void openGuide() {
         try {
@@ -189,11 +207,24 @@ public class LeisureLog extends JFrame {
     // invoked with export menu item action, calls log to publish
     private void exportLog() {
         try {
-            File pubFile = log.export();
-            infoMessage(this, "Successful Exported Log To \n " + pubFile.getAbsolutePath());
+            Marine duty = ms.lookup(Long.parseLong(inputMessage(this,
+                    "Enter DODID of On-Duty Marine")));
+            if (duty == null) {
+                int i = conMessage(this, "Marine Not Found For Entered DODID\n"
+                        + "Go To Add Marine?");
+                if (i == 0) {
+                    new OptionFrame(ms);
+                }
+                return;
+            }
+            File[] pubFiles = log.export(duty, logDirectoryPath);
+            infoMessage(this, "Log files Created:\n " + Arrays.toString(pubFiles)
+                    .replaceAll(",", "," + System.lineSeparator()));
             logBackup();
         } catch (IOException ioe) {
             errMessage(this, "Error Attempting To Export Log\n" + ioe.getMessage());
+        } catch (NumberFormatException nfe) {
+            errMessage(this, "Invalid Number Format\n" + nfe.getMessage());
         }
     }
 
@@ -208,15 +239,56 @@ public class LeisureLog extends JFrame {
         }
     }
 
+    // update config file used for initialize 
+    public static boolean writeConfig() {
+        try (FileWriter fw = new FileWriter(new File("log.ini"))) {
+            fw.write("marine_data_file=" + marineFilePath);
+            fw.write(System.lineSeparator());
+            fw.write("log_directory=" + logDirectoryPath);
+            return true;
+        } catch (IOException ioe) {
+            return false;
+        }
+    }
+
+    // setters for config files paths
+    public static void setMarineFile(Path mfp) {
+        marineFilePath = mfp;
+    }
+
+    public static void setLogDirectory(Path ld) {
+        logDirectoryPath = ld;
+    }
+    
+    //getters for config file paths
+    public static Path getMarineFile(){
+        return marineFilePath;
+    }
+    
+    public static Path getLogDirectory(){
+        return logDirectoryPath;
+    }
+
     // opens file chooser, returns file if selected, null otherwise
-    public static File chooseFile(Component c, String str) {
+    public static File chooseFile(Component c, String str, int selectMode) {
         JFileChooser jfc = new JFileChooser(".");
+        jfc.setFileSelectionMode(selectMode);
         if (jfc.showDialog(c, str)
                 == JFileChooser.APPROVE_OPTION) {
             return jfc.getSelectedFile();
         } else {
             return null;
         }
+    }
+
+    // two argument file chooser
+    public static File chooseFile(Component c, String str) {
+        return chooseFile(c, str, JFileChooser.FILES_ONLY);
+    }
+
+    // generic get input from user
+    public static String inputMessage(Component c, String str) {
+        return JOptionPane.showInputDialog(c, str);
     }
 
     // generic error messsage
@@ -231,7 +303,7 @@ public class LeisureLog extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // generic yes no cancel question
+    // generic yes no cancel question, 0 yes, 1 no, 2 cancel
     public static int conMessage(Component c, String str) {
         return JOptionPane.showConfirmDialog(c, str);
     }
@@ -239,6 +311,7 @@ public class LeisureLog extends JFrame {
     // Panel builds list of Marines for check-out
     private class ListPanel extends JPanel {
 
+        private static final long serialVersionUID = 3705684176899539313L;
         // Panel componenets
         private DefaultListModel<Marine> dlmGrp = new DefaultListModel<>();
         private JList<Marine> jlGrp = new JList<>(dlmGrp);
@@ -297,6 +370,7 @@ public class LeisureLog extends JFrame {
                 return;
             }
             dlmGrp.addElement(m);
+            lkPan.clear();
         }
 
         // clears list
@@ -320,6 +394,7 @@ public class LeisureLog extends JFrame {
     // Check in/out panel
     private class CheckPanel extends JPanel {
 
+        private static final long serialVersionUID = 2286389252973980351L;
         private JButton chkInBtn = new JButton("Check In"),
                 chkOutBtn = new JButton("Check Out");
         private JTextField jtfDest = new JTextField(),

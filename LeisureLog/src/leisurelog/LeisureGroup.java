@@ -1,9 +1,10 @@
 package leisurelog;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
-
+    private static final long serialVersionUID = -631615550959333287L;
     //total number of groups
     private static int grpCnt;
     // this groups id
@@ -16,8 +17,11 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
     private final LogDateTime chkOut;
     // marine array for group members
     private final Marine[] marArr;
+    // curfew[1] E4/E5 T1, curfew[0] others
+    //private final LogDateTime[] curfew;
     // check in time arrary 1 for 1 to marine array for different check ins
     private LogDateTime[] chkIn;
+    
 
     // construct from marine array of memebers, destination, check out current time
     LeisureGroup(Marine[] ma, String dest, String contact) {
@@ -26,6 +30,7 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
         this.dest = dest;
         this.contact = contact;
         this.chkOut = new LogDateTime();
+        //curfew = chkOut.getCurfews();
         grpID = ++grpCnt;
     }
 
@@ -46,9 +51,14 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
         return marArr;
     }
     
+    public String getContact(){
+        return contact;
+    }
+    
     public static int getGrpCnt() {
         return grpCnt;
     }
+    
     
     public static void setGrpCnt(int i){
         grpCnt=i;
@@ -63,15 +73,18 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
         }
         return null;
     }
+    
 
-    // checks in specified marine, needs checks
-    // public boolean chkIn(ArrayList<Marine> mal)
+
+    // checks in specified marine
     public void chkIn(Marine m, LogDateTime ldt) {
         for (int i = 0; i < marArr.length; i++) {
             if (marArr[i].equals(m)) {
                 chkIn[i] = ldt;
+                return;               
             }
         }
+        return;
     }
     
     @Override
