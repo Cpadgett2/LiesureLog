@@ -13,7 +13,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /**
- * Configuration frame for init settings
+ * Configuration frame for ini settings
+ *
  * @author TeamLeisure
  */
 public class ConfigFrame extends JFrame {
@@ -96,12 +97,18 @@ public class ConfigFrame extends JFrame {
 
         // invoked with browse button action, prompts user to select file
         private void browseFile() {
-            File f = LeisureLog.chooseFile(this, "Select Marine Data File");
+            File f;
+            if (file == null) {
+                f = LeisureLog.chooseFile(this, "Select Marine Data File");
+            } else {
+                f = LeisureLog.chooseFile(this, "Select Marine Data File",
+                        file.toString());
+            }
             if (f != null && f.canRead()) {
                 jtfFile.setText(f.getAbsolutePath());
                 file = f.toPath();
                 fileUpdate = true;
-            } else {
+            } else if (f != null){
                 LeisureLog.errMessage(this, "Selected File Not Readable");
             }
         }
@@ -129,13 +136,20 @@ public class ConfigFrame extends JFrame {
 
         // invoked with browse button action, prompts user for directory select
         private void browseDirectory() {
-            File f = LeisureLog.chooseFile(this,
-                    "Select Directory For Log Publications",
-                    JFileChooser.DIRECTORIES_ONLY);
+            File f;
+            if (dir == null) {
+                f = LeisureLog.chooseFile(this,
+                        "Select Directory For Log Publications",
+                        JFileChooser.DIRECTORIES_ONLY, ".");
+            } else {
+                f = LeisureLog.chooseFile(this,
+                        "Select Directory For Log Publications",
+                        JFileChooser.DIRECTORIES_ONLY, dir.toString());
+            }
             if (f != null && f.isDirectory()) {
                 jtfDir.setText(f.getAbsolutePath());
                 dir = f.toPath();
-            } else {
+            } else if (f != null){
                 LeisureLog.errMessage(this, "Invalid Directory Selected");
             }
         }

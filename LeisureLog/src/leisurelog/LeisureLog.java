@@ -1,6 +1,8 @@
 package leisurelog;
 
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -43,11 +45,10 @@ public class LeisureLog extends JFrame {
         super("Leisure Log");
         this.setSize(750, 500);
         this.setLocationRelativeTo(null);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         initilize();
         bldGUI();
         this.setVisible(true);
-        //new ConfigFrame();
     }
 
     // main method instantiates 
@@ -160,6 +161,12 @@ public class LeisureLog extends JFrame {
         this.setLayout(new BorderLayout());
         this.add(new JScrollPane(bldTopPanel()), BorderLayout.NORTH);
         this.add(new JScrollPane(table), BorderLayout.CENTER);
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+                close();
+            }
+        });
     }
 
     // returns panel composed of lookup, list and check panels
@@ -184,6 +191,17 @@ public class LeisureLog extends JFrame {
     }
 
     // GUI component actions
+    // invoked with windows closing event
+    private void close() {
+        if (log.getRowCount() > 0) {
+            int i = conMessage(this, "Log Not Published, Continue Exit?");
+            if (i != 0) {
+                return;
+            }
+        }
+        this.dispose();
+    }
+
     // invoked with config menu item action
     private void configAction() {
         new ConfigFrame(ms);
@@ -207,6 +225,17 @@ public class LeisureLog extends JFrame {
     // invoked with export menu item action, calls log to publish
     private void exportLog() {
         try {
+            if (log.getOutCnt() > 0) {
+                int i = conMessage(this, "Log Contains Open Entries, Continue?");
+                if (i != 0) {
+                    return;
+                }
+            }
+            if (logDirectoryPath == null) {
+                errMessage(this, "No Publish Directory Selected");
+                new ConfigFrame(ms);
+                return;
+            }
             Marine duty = ms.lookup(Long.parseLong(inputMessage(this,
                     "Enter DODID of On-Duty Marine")));
             if (duty == null) {
@@ -259,19 +288,20 @@ public class LeisureLog extends JFrame {
     public static void setLogDirectory(Path ld) {
         logDirectoryPath = ld;
     }
-    
+
     //getters for config file paths
-    public static Path getMarineFile(){
+    public static Path getMarineFile() {
         return marineFilePath;
     }
-    
-    public static Path getLogDirectory(){
+
+    public static Path getLogDirectory() {
         return logDirectoryPath;
     }
 
     // opens file chooser, returns file if selected, null otherwise
-    public static File chooseFile(Component c, String str, int selectMode) {
-        JFileChooser jfc = new JFileChooser(".");
+    public static File chooseFile(Component c, String str, int selectMode,
+            String path) {
+        JFileChooser jfc = new JFileChooser(path);
         jfc.setFileSelectionMode(selectMode);
         if (jfc.showDialog(c, str)
                 == JFileChooser.APPROVE_OPTION) {
@@ -283,7 +313,12 @@ public class LeisureLog extends JFrame {
 
     // two argument file chooser
     public static File chooseFile(Component c, String str) {
-        return chooseFile(c, str, JFileChooser.FILES_ONLY);
+        return chooseFile(c, str, JFileChooser.FILES_ONLY, ".");
+    }
+
+    // three argument file chooser
+    public static File chooseFile(Component c, String message, String path) {
+        return chooseFile(c, message, JFileChooser.FILES_ONLY, path);
     }
 
     // generic get input from user

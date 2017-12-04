@@ -38,6 +38,11 @@ public class Log extends AbstractTableModel {
     public int getColumnCount() {
         return COLCNT;
     }
+    
+    // returns number marines currently checked out
+    public int getOutCnt(){
+        return outMarines.size();
+    }
 
     // returns object applicable to column for given row, for cell display
     @Override
@@ -82,6 +87,7 @@ public class Log extends AbstractTableModel {
         }         
     }
     
+    // true if log entry has late flag
     public boolean hasFlag(int row){
         return logList.get(row).hasFlag();
     }
