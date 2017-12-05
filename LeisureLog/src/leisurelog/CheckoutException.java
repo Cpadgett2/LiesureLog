@@ -8,6 +8,7 @@ package leisurelog;
 
 public class CheckoutException extends Exception {
     
+    private static final long serialVersionUID = 4976383721817427942L;
     private final Marine m;    
 
     CheckoutException(String message, Marine m){

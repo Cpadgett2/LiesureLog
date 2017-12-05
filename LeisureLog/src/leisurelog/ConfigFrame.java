@@ -18,7 +18,7 @@ import javax.swing.JTextField;
  * @author TeamLeisure
  */
 public class ConfigFrame extends JFrame {
-
+    private static final long serialVersionUID = -7246437631522970335L;
     JButton okBtn = new JButton("OK"), cancelBtn = new JButton("Cancel");
     MarineStructure ms;
     FilePanel fp;
@@ -77,7 +77,7 @@ public class ConfigFrame extends JFrame {
 
     // inner panel for selection of marine data file path
     private class FilePanel extends JPanel {
-
+        private static final long serialVersionUID = 5672019349616902840L;
         JTextField jtfFile = new JTextField(25);
         JButton browseFile = new JButton("Browse");
         Path file;
@@ -116,7 +116,7 @@ public class ConfigFrame extends JFrame {
 
     // inner panel for log directory path
     private class DirPanel extends JPanel {
-
+        private static final long serialVersionUID = -7928922845412221148L;
         JTextField jtfDir = new JTextField(25);
         JButton browseDir = new JButton("Browse");
         Path dir;

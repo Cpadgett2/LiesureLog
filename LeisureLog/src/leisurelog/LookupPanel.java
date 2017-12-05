@@ -125,10 +125,15 @@ public class LookupPanel extends JPanel {
     // invoked with lookup button action, gets Marine from Marine Structure
     private void lookup() {
         try {
-            long id = Long.parseLong(jtfID.getText());
+            String idStr = jtfID.getText().trim();
+            if (idStr.isEmpty()){
+                throw new IllegalArgumentException("DODID Field Empty");
+            }
+            long id = Long.parseLong(idStr);
             marine = ms.lookup(id);
             if (marine == null){
-                LeisureLog.errMessage(this, "Marine Not Found For DODID " + id);
+                LeisureLog.errMessage(this, "Marine Record Not Found For DODID: " 
+                        + id);
                 return;
             }
             nameLbl.setText(marine.getName());
@@ -139,7 +144,10 @@ public class LookupPanel extends JPanel {
             grLbl.setText(marine.getGrade().toString());
             jtfID.setText("");
         } catch (NumberFormatException nfe) {
-            LeisureLog.errMessage(this, "Entered DODID Not Valid\n" + nfe.getMessage());
+            LeisureLog.errMessage(this, "DODID Must Be Numeric Value\n" 
+                    + nfe.getMessage());
+        } catch (IllegalArgumentException iae){
+            LeisureLog.errMessage(this, "Invalid Input: \n" + iae.getMessage());
         }
 
     }

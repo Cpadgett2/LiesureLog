@@ -97,11 +97,13 @@ class OptionFrame extends JFrame {
         private void remove() {
             Marine m = lkPan.getMarine();
             if (m == null) {
-                LeisureLog.errMessage(this, "No Marine Selected");
+                LeisureLog.errMessage(this, "No Marine Selected\n"
+                        + "Verify DODID Lookup");
                 return;
             }
             if (!ms.remove(m)) {
-                LeisureLog.errMessage(this, "Error Removing, Marine Not Found");
+                LeisureLog.errMessage(this, "Marine Record Not Found, "
+                        + "Unable to Delete");
                 return;
             }
             if (!updated) {
@@ -135,7 +137,8 @@ class OptionFrame extends JFrame {
                         infoPan.getFirst(), infoPan.getMid(), infoPan.getLast(),
                         infoPan.getRoom(), infoPan.getTier());
                 if (!ms.add(m)) {
-                    LeisureLog.errMessage(this, "Error - Marine ID Already Present");
+                    LeisureLog.errMessage(this, "Duplicate DODID: "
+                            + "Record With This DODID Already Exists");
                     return;
                 } else {
                     LeisureLog.infoMessage(this, "Successfully Added Marine\n " + m);
@@ -144,8 +147,9 @@ class OptionFrame extends JFrame {
                     }
                     infoPan.clear();
                 }
-            } catch (RuntimeException rte) {
-                LeisureLog.errMessage(this, "Invalid Input Entered\n" + rte.getMessage());
+            } catch (IllegalArgumentException iae) {
+                LeisureLog.errMessage(this, "Invalid Input:\n" 
+                        + iae.getMessage());
                 return;
             }
         }
@@ -177,8 +181,8 @@ class OptionFrame extends JFrame {
                 }
                 LeisureLog.infoMessage(this, "Marine Successfully Updated\n" + m);
                 upInfoPan.clear();
-            } catch (NumberFormatException nfe) {
-                LeisureLog.errMessage(this, "Invalid Input \n" + nfe.getMessage());
+            } catch (IllegalArgumentException iae){
+                LeisureLog.errMessage(this, "Invalid Input:\n" + iae.getMessage());
             }
         }
 
@@ -299,19 +303,29 @@ class OptionFrame extends JFrame {
             midTxt.setText("");
             lastTxt.setText("");
             roomTxt.setText("");
+            tierCmb.setSelectedIndex(0);
+            rankCmb.setSelectedIndex(0);
             marine = null;
         }
 
         // getters for entered info
         private long getDODID() {
-            return Long.parseLong(dodTxt.getText());
+            String str = dodTxt.getText().trim();
+            if(str.isEmpty()){
+                throw new IllegalArgumentException("DODID Field Empty");                
+            }
+            try {
+            return Long.parseLong(str);
+            } catch (NumberFormatException nfe){
+                throw new NumberFormatException("DODID Must Be Numeric Value\n" 
+                        + nfe.getMessage());
+            }
         }
 
         private String getFirst() {
-            String str = firstTxt.getText();
-            str = str.trim();
+            String str = firstTxt.getText().trim();
             if (str.isEmpty()) {
-                throw new RuntimeException("First Name Field Empty");
+                throw new IllegalArgumentException("First Name Field Empty");
             }
             return str;
         }
@@ -321,10 +335,9 @@ class OptionFrame extends JFrame {
         }
 
         private String getLast() {
-            String str = lastTxt.getText();
-            str = str.trim();
+            String str = lastTxt.getText().trim();
             if (str.isEmpty()) {
-                throw new RuntimeException("Last Name Field Empty");
+                throw new IllegalArgumentException("Last Name Field Empty");
             }
             return str;
         }
@@ -347,7 +360,16 @@ class OptionFrame extends JFrame {
         }
 
         private int getRoom() {
-            return Integer.parseInt(roomTxt.getText());
+            String str = roomTxt.getText().trim();
+            if(str.isEmpty()) {
+                throw new IllegalArgumentException("Room Field Empty");
+            }
+            try {
+            return Integer.parseInt(str);
+            } catch (NumberFormatException nfe){
+                throw new NumberFormatException("Room Must Be Numeric Value\n" 
+                        + nfe.getMessage());
+            }
         }
 
         private Marine.Tier getTier() {
@@ -378,7 +400,8 @@ class OptionFrame extends JFrame {
             try {
                 marine = ms.lookup(getDODID());
                 if (marine == null) {
-                    LeisureLog.errMessage(this, "Marine Not Found For DODID " + getDODID());
+                    LeisureLog.errMessage(this, "Marine Record Not Found For DODID: " 
+                            + getDODID());
                     return;
                 }
                 firstTxt.setText(marine.getFirstName());
@@ -389,8 +412,9 @@ class OptionFrame extends JFrame {
                 rankCmb.setSelectedIndex(grade - 1);
                 int tier = Integer.parseInt(marine.getTier().toString().substring(1));
                 tierCmb.setSelectedIndex(tier - 1);
-            } catch (NumberFormatException nfe) {
-                LeisureLog.errMessage(this, "Entered DODID Not Valid\n" + nfe.getMessage());
+            } catch (IllegalArgumentException iae) {
+                LeisureLog.errMessage(this, "Invalid Input:\n" 
+                        + iae.getMessage());
             }
         }
     }

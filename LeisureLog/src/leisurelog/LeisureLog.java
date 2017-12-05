@@ -39,6 +39,7 @@ public class LeisureLog extends JFrame {
     private Log log;
     private JTable table;
     private static Path logDirectoryPath, marineFilePath;
+    private Marine duty;
 
     //constructor
     LeisureLog() throws IOException {
@@ -137,11 +138,14 @@ public class LeisureLog extends JFrame {
         JMenuItem manageMi = new JMenuItem("Marine Management"),
                 exportMi = new JMenuItem("Publish Log"),
                 userMi = new JMenuItem("User Guide"),
-                configMi = new JMenuItem("Configuration");
-        manageMi.addActionListener(e -> new OptionFrame(ms));
-        adminMenu.add(manageMi);
+                configMi = new JMenuItem("Configuration"),
+                signMi = new JMenuItem("Duty Sign In");
+        signMi.addActionListener(l -> signIn());
+        adminMenu.add(signMi);        
         configMi.addActionListener(l -> configAction());
         adminMenu.add(configMi);
+        manageMi.addActionListener(e -> new OptionFrame(ms));
+        adminMenu.add(manageMi);
         adminMenu.addSeparator();
         exportMi.addActionListener(l -> exportLog());
         adminMenu.add(exportMi);
@@ -180,7 +184,7 @@ public class LeisureLog extends JFrame {
         c.weighty = 0.5;
         c.gridx = 0;
         c.gridy = 0;
-        topPan.add(lkPan, c); // lookup pane
+        topPan.add(lkPan, c); // lookup panel
         c.gridy = 1;
         topPan.add(listPan, c); // list pane
         c.gridx = 1;
@@ -200,6 +204,58 @@ public class LeisureLog extends JFrame {
             }
         }
         this.dispose();
+    }
+
+    // alternative duty sign in interface
+    // prompts user for sign in, true if marine signed in 
+//    private boolean signIn() {
+//        LookupPanel lp = new LookupPanel(ms);
+//        String[] options = {"Sign In","Cancel"};
+//        Marine m;
+//        int i = JOptionPane.showOptionDialog(this, lp, "On-Duty Marine Sign In", 
+//                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
+//                null, options, null);
+//        if (i == 1) {
+//            return false;
+//        } 
+//        m = lp.getMarine();
+//        if (m == null) {
+//            i = conMessage(this, "Marine Record Not Found\n"
+//                    + "Go To Add Marine?");
+//            if (i == 0) {
+//                new OptionFrame(ms);                
+//            }
+//            return false;
+//        }
+//        duty = m;
+//        chkPan.updateDuty();
+//        return true;
+//    }
+    
+        // prompts user for sign in, true if marine signed in 
+    private boolean signIn() {
+        String[] options = {"Sign In","Cancel"};
+        String str = JOptionPane.showInputDialog(this, "Enter DODID:", 
+                "On-Duty Marine Sign In",JOptionPane.INFORMATION_MESSAGE);
+        if (str == null) return false;
+        Marine m;
+        try {
+            m = ms.lookup(Long.parseLong(str));
+        } catch (NumberFormatException nfe){
+            errMessage(this, "DODID Must Be Numeric Value\n" + nfe.getMessage());
+            return signIn();
+        }
+        if (m == null) {
+            int i = conMessage(this, "Marine Record Not Found For Entered DODID\n"
+                    + "Go To Add Marine?");
+            if (i == 0) {
+                new OptionFrame(ms);                
+            }
+            return false;
+        }
+        duty = m;
+        chkPan.updateDuty();
+        return true;
     }
 
     // invoked with config menu item action
@@ -236,15 +292,8 @@ public class LeisureLog extends JFrame {
                 new ConfigFrame(ms);
                 return;
             }
-            Marine duty = ms.lookup(Long.parseLong(inputMessage(this,
-                    "Enter DODID of On-Duty Marine")));
             if (duty == null) {
-                int i = conMessage(this, "Marine Not Found For Entered DODID\n"
-                        + "Go To Add Marine?");
-                if (i == 0) {
-                    new OptionFrame(ms);
-                }
-                return;
+                if (!signIn()) return;
             }
             File[] pubFiles = log.export(duty, logDirectoryPath);
             infoMessage(this, "Log files Created:\n " + Arrays.toString(pubFiles)
@@ -435,7 +484,8 @@ public class LeisureLog extends JFrame {
         private JTextField jtfDest = new JTextField(),
                 jtfContact = new JTextField();
         private JLabel chkLbl = new JLabel("<html><center>Leisure Log Start<br>"
-                + new LogDateTime().toString() + "</html>", SwingConstants.CENTER);
+                + new LogDateTime().toString() + "</html>", SwingConstants.CENTER),
+                dutyLbl = new JLabel("On-Duty Marine: " + duty);
 
         CheckPanel() {
             this.setLayout(new GridBagLayout());
@@ -444,9 +494,9 @@ public class LeisureLog extends JFrame {
             c.weightx = 0.5;
             c.weighty = 0.5;
             c.insets = i;
-            c.gridx = 0;
+            c.gridx = 0;            
             c.gridwidth = 2;
-            c.gridy = 0;
+            c.gridy = 0;            
             i.set(10, 0, 10, 10);
             // read, resize and add icon
             try {
@@ -459,14 +509,16 @@ public class LeisureLog extends JFrame {
             }
             i.set(5, 0, 0, 10);
             c.gridy = 1;
-            c.gridwidth = 1;
             c.fill = GridBagConstraints.HORIZONTAL;
+            this.add(dutyLbl, c);           
+            c.gridy = 2;
+            c.gridwidth = 1;
             c.anchor = GridBagConstraints.LAST_LINE_START;
             this.add(new JLabel("Enter Destination:"), c);
             c.gridx = 1;
             this.add(new JLabel("Enter Contact Number:"), c);
             c.gridx = 0;
-            c.gridy = 2;
+            c.gridy = 3;
             c.anchor = GridBagConstraints.FIRST_LINE_START;
             i.set(0, 0, 5, 10);
             this.add(jtfDest, c);
@@ -476,16 +528,16 @@ public class LeisureLog extends JFrame {
             c.fill = GridBagConstraints.NONE;
             c.anchor = GridBagConstraints.FIRST_LINE_END;
             i.set(5, 0, 5, 25);
-            c.gridy = 3;
+            c.gridy = 4;
             chkOutBtn.addActionListener(e -> checkOut());
             this.add(chkOutBtn, c);
-            c.gridy = 4;
+            c.gridy = 5;
             chkInBtn.setPreferredSize(chkOutBtn.getPreferredSize());
             c.anchor = GridBagConstraints.LAST_LINE_END;
             chkInBtn.addActionListener(e -> checkIn());
             this.add(chkInBtn, c);
             c.gridx = 1;
-            c.gridy = 3;
+            c.gridy = 4;
             c.gridheight = 2;
             c.anchor = GridBagConstraints.CENTER;
             i.set(5, 3, 5, 10);
@@ -501,6 +553,10 @@ public class LeisureLog extends JFrame {
             jtfDest.setPreferredSize(new Dimension((int) (d.getWidth() * 1.5),
                     jtfDest.getPreferredSize().height));
 
+        }
+        
+        private void updateDuty(){
+            dutyLbl.setText("On-Duty Marine: " + duty);
         }
 
         // gets marines, time and destination, calls log checkout
@@ -555,7 +611,7 @@ public class LeisureLog extends JFrame {
     }
 
     private class LogTimeRenderer extends DefaultTableCellRenderer {
-
+        private static final long serialVersionUID = 7060424854144269811L;
         @Override
         public Component getTableCellRendererComponent(JTable table, Object Value,
                 boolean isSelected, boolean hasFocus, int row, int col) {
