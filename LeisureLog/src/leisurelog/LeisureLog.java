@@ -101,8 +101,8 @@ public class LeisureLog extends JFrame {
             }
         } catch (NullPointerException | IOException e) {
             // if proble reading config file display config frame
-            errMessage(this, "Problem Reading Initialization Files\n"
-                    + e.getMessage());
+            //errMessage(this, "Problem Reading Initialization Files\n"
+                    //+ e.getMessage());
             new ConfigFrame(ms);
         }
         // recover log, set table model
