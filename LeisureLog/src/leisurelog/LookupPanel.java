@@ -11,7 +11,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /**
- *
  * Panel for lookup and display of Marine info based on DODID
  * @author TeamLeisure
  */

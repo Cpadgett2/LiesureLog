@@ -38,11 +38,13 @@ public class LeisureLog extends JFrame {
     // log is model for table
     private Log log;
     private JTable table;
+    // paths for configuration
     private static Path logDirectoryPath, marineFilePath;
+    // On-duty Marine
     private Marine duty;
 
     //constructor
-    LeisureLog() throws IOException {
+    LeisureLog() {
         super("Leisure Log");
         this.setSize(750, 500);
         this.setLocationRelativeTo(null);
@@ -77,7 +79,6 @@ public class LeisureLog extends JFrame {
             marineFilePath = Paths.get(marineFile);
             logDirectoryPath = Paths.get(logDirectory);
             boolean configFlag = false;
-
             // if paths were read check validity
             if (!Files.isReadable(marineFilePath)) {
                 errMessage(this, "Error Reading Marine Data File\n"
@@ -101,8 +102,6 @@ public class LeisureLog extends JFrame {
             }
         } catch (NullPointerException | IOException e) {
             // if proble reading config file display config frame
-            //errMessage(this, "Problem Reading Initialization Files\n"
-                    //+ e.getMessage());
             new ConfigFrame(ms);
         }
         // recover log, set table model
@@ -121,10 +120,8 @@ public class LeisureLog extends JFrame {
             LeisureGroup.setGrpCnt(backupGrpCnt);
             return (Log) ois.readObject();
         } catch (IOException exc) {
-            //System.out.println(exc);
             return new Log();
         } catch (ClassNotFoundException cnf) {
-            //System.out.println("class not found");
             return new Log();
         }
     }
@@ -198,7 +195,10 @@ public class LeisureLog extends JFrame {
     // invoked with windows closing event
     private void close() {
         if (log.getRowCount() > 0) {
-            int i = conMessage(this, "Log Not Published, Continue Exit?");
+            int i = JOptionPane.showConfirmDialog(this, "Log Not Published, "
+                    + "Continue With Exit?\nNote: Unpublished Entries Will Be "
+                    + "Recovered On Startup", "Confirm Exit", 
+                    JOptionPane.YES_NO_OPTION);
             if (i != 0) {
                 return;
             }
@@ -443,7 +443,6 @@ public class LeisureLog extends JFrame {
 
         // invoked with add button action, gets Marine from lkPan, adds to list
         private void add() {
-            //dlmGrp.addElement(new Marine());
             Marine m = lkPan.getMarine();
             if (m == null) {
                 errMessage(this, "No Marine on Display");
@@ -555,6 +554,7 @@ public class LeisureLog extends JFrame {
 
         }
         
+        // updates duty label after Marine sign in
         private void updateDuty(){
             dutyLbl.setText("On-Duty Marine: " + duty);
         }
@@ -602,22 +602,32 @@ public class LeisureLog extends JFrame {
 
         // calls log to check in selected  
         private void checkIn() {
-            LogDateTime ldt = new LogDateTime();
-            chkLbl.setText("<html><center>Check In Successfull<br>"
+            LogDateTime ldt = log.chkIn();
+            if (ldt != null){
+                chkLbl.setBackground(Color.GREEN.darker());
+                chkLbl.setText("<html><center>Check In Successfull<br>"
                     + ldt.toString() + "</html>");
-            log.chkIn();
-            logBackup();
+                logBackup();
+            } else {
+                chkLbl.setText("Check In Failure");
+                chkLbl.setBackground(Color.RED);
+                errMessage(this, "No Marines Selected");                
+            }
         }
     }
 
+    // table cell renderer for LogDateTime Class display
     private class LogTimeRenderer extends DefaultTableCellRenderer {
         private static final long serialVersionUID = 7060424854144269811L;
+        
+        // returns component used for cell render
         @Override
         public Component getTableCellRendererComponent(JTable table, Object Value,
                 boolean isSelected, boolean hasFocus, int row, int col) {
             Component c = super.getTableCellRendererComponent(table, Value,
                     isSelected, hasFocus, row, col);
             JLabel label = (JLabel) c;
+            // component background depends on late check flag status
             if (log.hasFlag(row)) {
                 label.setBackground(Color.red);
             } else {

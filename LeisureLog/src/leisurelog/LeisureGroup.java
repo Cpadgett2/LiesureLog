@@ -1,9 +1,9 @@
 package leisurelog;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
+    
     private static final long serialVersionUID = -631615550959333287L;
     //total number of groups
     private static int grpCnt;
@@ -17,8 +17,6 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
     private final LogDateTime chkOut;
     // marine array for group members
     private final Marine[] marArr;
-    // curfew[1] E4/E5 T1, curfew[0] others
-    //private final LogDateTime[] curfew;
     // check in time arrary 1 for 1 to marine array for different check ins
     private LogDateTime[] chkIn;
     
@@ -74,17 +72,15 @@ public class LeisureGroup implements Comparable<LeisureGroup>, Serializable {
         return null;
     }
     
-
-
     // checks in specified marine
-    public void chkIn(Marine m, LogDateTime ldt) {
+    public boolean chkIn(Marine m, LogDateTime ldt) {
         for (int i = 0; i < marArr.length; i++) {
             if (marArr[i].equals(m)) {
                 chkIn[i] = ldt;
-                return;               
+                return true;               
             }
         }
-        return;
+        return false;
     }
     
     @Override

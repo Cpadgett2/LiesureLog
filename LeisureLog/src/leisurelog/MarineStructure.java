@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class MarineStructure {
 
-
+    // marines stored in hashmap, lookup based on dodid key
     HashMap<Long, Marine> hm = new HashMap<>(); 
 
     // builds structure from marine data file
@@ -67,6 +67,7 @@ public class MarineStructure {
         out.close();
     }
 
+    // adds marine to structure
     public boolean add(Marine m) {
         if (hm.containsKey(m.getDODID())) {
             return false;
@@ -80,10 +81,12 @@ public class MarineStructure {
         return hm.get(dodid);
     }
 
+    // removes marine from structure
     public boolean remove(Marine m) {
         return remove(m.getDODID());
     }
 
+    // removes marine associated with dodid key from stucture 
     public boolean remove(long dodid) {
         if (hm.remove(dodid) == null) {
             return false;
@@ -92,6 +95,7 @@ public class MarineStructure {
         }
     }
 
+    // how many maines in hashmap
     public int getMarineCount() {
         return hm.size();
     }

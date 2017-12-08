@@ -5,8 +5,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Defines log date objects used for log entries
+ *
+ * @author TeamLeisure
+ */
 
 public class LogDateTime implements Serializable {
+    
     private static final long serialVersionUID = -1302152153289478928L;
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 

@@ -20,6 +20,11 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
+/**
+ * Frame for marine management user interface for add, remove and delete functions
+ * @author TeamLeisure
+ */
+
 class OptionFrame extends JFrame {
 
     private static final long serialVersionUID = 7308024742648619776L;
@@ -111,7 +116,6 @@ class OptionFrame extends JFrame {
             }
             LeisureLog.infoMessage(this, "Successfully Removed Marine \n" + m);
             lkPan.clear();
-            //System.out.println("remove marine");
         }
 
     }
@@ -155,7 +159,7 @@ class OptionFrame extends JFrame {
         }
     }
 
-    // Update Existing Marine panel
+    // Panel for updating existing Marine
     private class UpdatePanel extends JPanel {
 
         private static final long serialVersionUID = -1935787367895541868L;
@@ -308,7 +312,7 @@ class OptionFrame extends JFrame {
             marine = null;
         }
 
-        // getters for entered info
+        // getters for info from components
         private long getDODID() {
             String str = dodTxt.getText().trim();
             if(str.isEmpty()){
