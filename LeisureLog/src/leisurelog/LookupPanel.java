@@ -7,6 +7,7 @@ import java.awt.Insets;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -120,6 +121,7 @@ public class LookupPanel extends JPanel {
         i.set(0, 1, 10, 10);
         this.add(tierLbl, c);
     }
+    
 
     // invoked with lookup button action, gets Marine from Marine Structure
     private void lookup() {
@@ -131,8 +133,10 @@ public class LookupPanel extends JPanel {
             long id = Long.parseLong(idStr);
             marine = ms.lookup(id);
             if (marine == null){
-                LeisureLog.errMessage(this, "Marine Record Not Found For DODID: " 
-                        + id);
+                int i = JOptionPane.showConfirmDialog(this, "Marine Record Not Found For DODID: " 
+                        + id + "\nGo To Add Marine Option?", "Marine Not Found",
+                        JOptionPane.YES_NO_OPTION);
+                if (i == 0) new OptionFrame(ms);
                 return;
             }
             nameLbl.setText(marine.getName());

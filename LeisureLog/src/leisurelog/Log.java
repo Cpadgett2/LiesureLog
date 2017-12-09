@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import javax.swing.table.AbstractTableModel;
 
@@ -159,7 +161,7 @@ public class Log extends AbstractTableModel {
         LogDateTime ldt = new LogDateTime();
         for (Log.Entry entry : logList) {
             if (entry.isSelected()) {
-                check = check || entry.getGroup().chkIn(entry.getMarine(), ldt);
+                check = entry.getGroup().chkIn(entry.getMarine(), ldt) || check;
                 entry.setSelect(false);
                 // if passed curfew
                 LogDateTime[] curfew
@@ -192,6 +194,7 @@ public class Log extends AbstractTableModel {
     // publish log to files
     public File[] export(Marine duty, Path directory)
             throws IOException {
+        Collections.sort(logList);
         LogDateTime pubLdt = new LogDateTime();
         String publishTime = pubLdt.getDate().replaceAll("/", "") + "_"
                 + pubLdt.getTime().replaceAll(":", "");
@@ -283,8 +286,54 @@ public class Log extends AbstractTableModel {
         bw.close();
     }
 
+    // sorts log entries based on column 
+    public void sort(int col) {
+        switch (col) {
+            case 0:
+                break;
+            case 1:
+                logList.sort((Entry e1, Entry e2)
+                        -> e1.getGroup().compareTo(e2.getGroup()));
+                break;
+            case 2:
+                logList.sort((Entry e1, Entry e2)
+                        -> Long.compare(e1.getMarine().getDODID(),
+                                e2.getMarine().getDODID()));
+                break;
+            case 3:
+                logList.sort((Entry e1, Entry e2)
+                        -> e1.getMarine().compareTo(e2.getMarine()));
+                break;
+            case 4:
+                logList.sort((Entry e1, Entry e2)
+                        -> e1.getGroup().getDestination().compareTo(
+                                e2.getGroup().getDestination()));
+                break;
+            case 5:
+                logList.sort((Entry e1, Entry e2)
+                        -> e1.getGroup().getContact().compareTo(
+                                e2.getGroup().getContact()));
+                break;
+            case 6:
+                logList.sort((Entry e1, Entry e2)
+                        -> e1.compareTo(e2));
+                break;
+            case 7:
+                logList.sort((Entry e1, Entry e2)
+                        -> {
+                    if (e1.getGroup().getChkInTime(e1.getMarine()) == null) {
+                        return -1;
+                    }
+                    return e1.getGroup().getChkInTime(e1.getMarine()).compareTo(
+                            e2.getGroup().getChkInTime(e2.getMarine()));
+                });
+                break;
+        }
+        super.fireTableDataChanged();
+    }
+
     // inner class is Entry for Log
-    private static class Entry implements Serializable {
+    private static class Entry implements Serializable, Comparable<Entry> {
 
         private static final long serialVersionUID = -4399433595070230812L;
         private final Marine m;
@@ -323,11 +372,17 @@ public class Log extends AbstractTableModel {
             this.lateFlag = flag;
         }
 
+        // natural ordering for log entries on checkout time
+        @Override
+        public int compareTo(Entry e) {
+            return this.lg.getChkOutTime().compareTo(e.getGroup().getChkOutTime());
+        }
+
         @Override
         public String toString() {
             String str = lg.getID() + "," + m.getDODID() + ","
                     + m.toString().replaceAll(",", "") + ","
-                    + lg.getDestination() + "," 
+                    + lg.getDestination() + ","
                     + lg.getChkOutTime() + "," + lg.getChkInTime(m);
             if (lateFlag) {
                 str = str + ",Late Check-In";

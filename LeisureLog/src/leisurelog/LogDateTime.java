@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
  * @author TeamLeisure
  */
 
-public class LogDateTime implements Serializable {
+public class LogDateTime implements Serializable, Comparable<LogDateTime> {
     
     private static final long serialVersionUID = -1302152153289478928L;
     private final LocalDateTime ldt;
@@ -72,6 +72,13 @@ public class LogDateTime implements Serializable {
     // is this log time after specified log time
     public boolean isAfter(LogDateTime specLogTime){
         return this.ldt.isAfter(specLogTime.getLocalDateTime());
+    }
+    
+    // natural ordering
+    @Override
+    public int compareTo(LogDateTime ldt){
+        if (ldt == null) return 1;
+        return this.ldt.compareTo(ldt.getLocalDateTime());
     }
     
     @Override

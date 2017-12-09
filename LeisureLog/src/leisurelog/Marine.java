@@ -7,7 +7,7 @@ import java.io.Serializable;
  *
  * @author TeamLeisure
  */
-public class Marine implements Serializable {
+public class Marine implements Serializable, Comparable<Marine> {
 
     private static final long serialVersionUID = -5901364777177774222L;
 
@@ -114,6 +114,16 @@ public class Marine implements Serializable {
 
     public void setRoomNumber(int roomNumber) {
         this.roomNumber = roomNumber;
+    }
+    
+    // natural order marines based on name
+    @Override
+    public int compareTo(Marine m){
+        int i = this.lastName.compareTo(m.getLastName());
+        if (i == 0){
+            return this.firstName.compareTo(m.getFirstName());
+        }
+        return i;
     }
 
     // returns string for marine data file export

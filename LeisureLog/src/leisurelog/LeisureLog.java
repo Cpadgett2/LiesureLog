@@ -1,6 +1,8 @@
 package leisurelog;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -46,7 +48,7 @@ public class LeisureLog extends JFrame {
     //constructor
     LeisureLog() {
         super("Leisure Log");
-        this.setSize(750, 500);
+        this.setSize(770, 500);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         initilize();
@@ -138,7 +140,7 @@ public class LeisureLog extends JFrame {
                 configMi = new JMenuItem("Configuration"),
                 signMi = new JMenuItem("Duty Sign In");
         signMi.addActionListener(l -> signIn());
-        adminMenu.add(signMi);        
+        adminMenu.add(signMi);
         configMi.addActionListener(l -> configAction());
         adminMenu.add(configMi);
         manageMi.addActionListener(e -> new OptionFrame(ms));
@@ -158,6 +160,12 @@ public class LeisureLog extends JFrame {
         }
         table.setRowSelectionAllowed(false);
         table.setDefaultRenderer(LogDateTime.class, new LogTimeRenderer());
+        table.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                log.sort(table.getTableHeader().columnAtPoint(e.getPoint()));
+            }
+        });
         // add top panel and table to frame
         this.setLayout(new BorderLayout());
         this.add(new JScrollPane(bldTopPanel()), BorderLayout.NORTH);
@@ -197,7 +205,7 @@ public class LeisureLog extends JFrame {
         if (log.getRowCount() > 0) {
             int i = JOptionPane.showConfirmDialog(this, "Log Not Published, "
                     + "Continue With Exit?\nNote: Unpublished Entries Will Be "
-                    + "Recovered On Startup", "Confirm Exit", 
+                    + "Recovered On Startup", "Confirm Exit",
                     JOptionPane.YES_NO_OPTION);
             if (i != 0) {
                 return;
@@ -206,33 +214,8 @@ public class LeisureLog extends JFrame {
         this.dispose();
     }
 
-    // alternative duty sign in interface
+
     // prompts user for sign in, true if marine signed in 
-//    private boolean signIn() {
-//        LookupPanel lp = new LookupPanel(ms);
-//        String[] options = {"Sign In","Cancel"};
-//        Marine m;
-//        int i = JOptionPane.showOptionDialog(this, lp, "On-Duty Marine Sign In", 
-//                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, 
-//                null, options, null);
-//        if (i == 1) {
-//            return false;
-//        } 
-//        m = lp.getMarine();
-//        if (m == null) {
-//            i = conMessage(this, "Marine Record Not Found\n"
-//                    + "Go To Add Marine?");
-//            if (i == 0) {
-//                new OptionFrame(ms);                
-//            }
-//            return false;
-//        }
-//        duty = m;
-//        chkPan.updateDuty();
-//        return true;
-//    }
-    
-        // prompts user for sign in, true if marine signed in 
     private boolean signIn() {
         String[] options = {"Sign In","Cancel"};
         String str = JOptionPane.showInputDialog(this, "Enter DODID:", 
@@ -257,6 +240,7 @@ public class LeisureLog extends JFrame {
         chkPan.updateDuty();
         return true;
     }
+
 
     // invoked with config menu item action
     private void configAction() {
@@ -293,7 +277,9 @@ public class LeisureLog extends JFrame {
                 return;
             }
             if (duty == null) {
-                if (!signIn()) return;
+                if (!signIn()) {
+                    return;
+                }
             }
             File[] pubFiles = log.export(duty, logDirectoryPath);
             infoMessage(this, "Log files Created:\n " + Arrays.toString(pubFiles)
@@ -493,9 +479,9 @@ public class LeisureLog extends JFrame {
             c.weightx = 0.5;
             c.weighty = 0.5;
             c.insets = i;
-            c.gridx = 0;            
+            c.gridx = 0;
             c.gridwidth = 2;
-            c.gridy = 0;            
+            c.gridy = 0;
             i.set(10, 0, 10, 10);
             // read, resize and add icon
             try {
@@ -509,7 +495,7 @@ public class LeisureLog extends JFrame {
             i.set(5, 0, 0, 10);
             c.gridy = 1;
             c.fill = GridBagConstraints.HORIZONTAL;
-            this.add(dutyLbl, c);           
+            this.add(dutyLbl, c);
             c.gridy = 2;
             c.gridwidth = 1;
             c.anchor = GridBagConstraints.LAST_LINE_START;
@@ -553,9 +539,9 @@ public class LeisureLog extends JFrame {
                     jtfDest.getPreferredSize().height));
 
         }
-        
+
         // updates duty label after Marine sign in
-        private void updateDuty(){
+        private void updateDuty() {
             dutyLbl.setText("On-Duty Marine: " + duty);
         }
 
@@ -603,23 +589,24 @@ public class LeisureLog extends JFrame {
         // calls log to check in selected  
         private void checkIn() {
             LogDateTime ldt = log.chkIn();
-            if (ldt != null){
+            if (ldt != null) {
                 chkLbl.setBackground(Color.GREEN.darker());
                 chkLbl.setText("<html><center>Check In Successfull<br>"
-                    + ldt.toString() + "</html>");
+                        + ldt.toString() + "</html>");
                 logBackup();
             } else {
                 chkLbl.setText("Check In Failure");
                 chkLbl.setBackground(Color.RED);
-                errMessage(this, "No Marines Selected");                
+                errMessage(this, "No Marines Selected");
             }
         }
     }
 
     // table cell renderer for LogDateTime Class display
     private class LogTimeRenderer extends DefaultTableCellRenderer {
+
         private static final long serialVersionUID = 7060424854144269811L;
-        
+
         // returns component used for cell render
         @Override
         public Component getTableCellRendererComponent(JTable table, Object Value,
