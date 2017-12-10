@@ -21,10 +21,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 /**
- * Frame for marine management user interface for add, remove and delete functions
+ * Frame for marine management user interface for add, remove and delete
+ * functions
+ *
  * @author TeamLeisure
  */
-
 class OptionFrame extends JFrame {
 
     private static final long serialVersionUID = 7308024742648619776L;
@@ -152,7 +153,7 @@ class OptionFrame extends JFrame {
                     infoPan.clear();
                 }
             } catch (IllegalArgumentException iae) {
-                LeisureLog.errMessage(this, "Invalid Input:\n" 
+                LeisureLog.errMessage(this, "Invalid Input:\n"
                         + iae.getMessage());
                 return;
             }
@@ -177,15 +178,30 @@ class OptionFrame extends JFrame {
         private void update() {
             try {
                 Marine m = upInfoPan.getMarine();
-                m.setGrade(upInfoPan.getGrade());
-                m.setRoomNumber(upInfoPan.getRoom());
-                m.setTier(upInfoPan.getTier());
-                if (!updated) {
-                    updated = true;
+                if (m == null){
+                    LeisureLog.errMessage(this, "Update Panel Has "
+                            + "Not Been Populated");
+                    return;
                 }
-                LeisureLog.infoMessage(this, "Marine Successfully Updated\n" + m);
-                upInfoPan.clear();
-            } catch (IllegalArgumentException iae){
+                if (m.getDODID() != upInfoPan.getDODID()) {
+                    LeisureLog.errMessage(this, "DODID Field Has Been Modified\n"
+                            + "Updates Can Not Be Made To This Field");
+                    return;
+                }
+                if (m.setGrade(upInfoPan.getGrade())
+                        || m.setRoomNumber(upInfoPan.getRoom())
+                        || m.setTier(upInfoPan.getTier())) {
+                    if (!updated) {
+                        updated = true;
+                    }
+                    LeisureLog.infoMessage(this, "Marine Successfully Updated\n" + m);
+                    upInfoPan.clear();
+                } else {
+                    LeisureLog.errMessage(this, "No Modifications Made "
+                            + "To Updatable Fields\n"
+                            + "Updatable Fields: Grade, Rank, Tier");
+                }
+            } catch (IllegalArgumentException  iae) {
                 LeisureLog.errMessage(this, "Invalid Input:\n" + iae.getMessage());
             }
         }
@@ -315,13 +331,13 @@ class OptionFrame extends JFrame {
         // getters for info from components
         private long getDODID() {
             String str = dodTxt.getText().trim();
-            if(str.isEmpty()){
-                throw new IllegalArgumentException("DODID Field Empty");                
+            if (str.isEmpty()) {
+                throw new IllegalArgumentException("DODID Field Empty");
             }
             try {
-            return Long.parseLong(str);
-            } catch (NumberFormatException nfe){
-                throw new NumberFormatException("DODID Must Be Numeric Value\n" 
+                return Long.parseLong(str);
+            } catch (NumberFormatException nfe) {
+                throw new NumberFormatException("DODID Must Be Numeric Value\n"
                         + nfe.getMessage());
             }
         }
@@ -365,13 +381,13 @@ class OptionFrame extends JFrame {
 
         private int getRoom() {
             String str = roomTxt.getText().trim();
-            if(str.isEmpty()) {
+            if (str.isEmpty()) {
                 throw new IllegalArgumentException("Room Field Empty");
             }
             try {
-            return Integer.parseInt(str);
-            } catch (NumberFormatException nfe){
-                throw new NumberFormatException("Room Must Be Numeric Value\n" 
+                return Integer.parseInt(str);
+            } catch (NumberFormatException nfe) {
+                throw new NumberFormatException("Room Must Be Numeric Value\n"
                         + nfe.getMessage());
             }
         }
@@ -404,7 +420,7 @@ class OptionFrame extends JFrame {
             try {
                 marine = ms.lookup(getDODID());
                 if (marine == null) {
-                    LeisureLog.errMessage(this, "Marine Record Not Found For DODID: " 
+                    LeisureLog.errMessage(this, "Marine Record Not Found For DODID: "
                             + getDODID());
                     return;
                 }
@@ -417,7 +433,7 @@ class OptionFrame extends JFrame {
                 int tier = Integer.parseInt(marine.getTier().toString().substring(1));
                 tierCmb.setSelectedIndex(tier - 1);
             } catch (IllegalArgumentException iae) {
-                LeisureLog.errMessage(this, "Invalid Input:\n" 
+                LeisureLog.errMessage(this, "Invalid Input:\n"
                         + iae.getMessage());
             }
         }

@@ -104,16 +104,22 @@ public class Marine implements Serializable, Comparable<Marine> {
     }
 
     // setters
-    public void setGrade(Grade grade) {
+    public boolean setGrade(Grade grade) {
+        if (this.grade == grade) return false;
         this.grade = grade;
+        return true;
     }
 
-    public void setTier(Tier t) {
+    public boolean setTier(Tier t) {
+        if (this.tier == t) return false;
         this.tier = t;
+        return true;
     }
 
-    public void setRoomNumber(int roomNumber) {
+    public boolean setRoomNumber(int roomNumber) {
+        if (this.roomNumber == roomNumber) return false;
         this.roomNumber = roomNumber;
+        return true;
     }
     
     // natural order marines based on name
