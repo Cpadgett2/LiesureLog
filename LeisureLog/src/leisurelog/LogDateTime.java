@@ -17,6 +17,8 @@ public class LogDateTime implements Serializable, Comparable<LogDateTime> {
     private final LocalDateTime ldt;
     private static final DateTimeFormatter dtf = 
             DateTimeFormatter.ofPattern("MM'/'dd'/'yy' 'HH':'mm':'ss");
+    private static final String EARLYCURFEW = "00:00:00",
+            LATECURFEW = "01:00:00";
     
     // construct with current date time
     LogDateTime(){
@@ -59,8 +61,8 @@ public class LogDateTime implements Serializable, Comparable<LogDateTime> {
     public LogDateTime[] getCurfews(){
         LogDateTime tomorrow = new LogDateTime(ldt.plusDays(1));
         LogDateTime[] curfews = new LogDateTime[2];
-        curfews[0] = new LogDateTime(tomorrow.getDate(),"00:00:00");
-        curfews[1] = new LogDateTime(tomorrow.getDate(),"01:00:00");
+        curfews[0] = new LogDateTime(tomorrow.getDate(),EARLYCURFEW);
+        curfews[1] = new LogDateTime(tomorrow.getDate(),LATECURFEW);
         return curfews;
     }
     

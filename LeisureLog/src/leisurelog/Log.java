@@ -276,8 +276,8 @@ public class Log extends AbstractTableModel {
         boolean exists = Files.exists(file.toPath());
         BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
         if (!exists) {
-            bw.write("Group,DODID,Marine,Destination,Check-In,Check-Out"
-                    + System.lineSeparator());
+            bw.write("Group,DODID,Marine,Destination,Check-Out,Check-In"
+                + System.lineSeparator());
         }
         for (Entry e : logList) {
             bw.write(e.toString());

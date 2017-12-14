@@ -412,7 +412,8 @@ public class LeisureLog extends JFrame {
             // list setup
             jlGrp.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
             jlGrp.setVisibleRowCount(4);
-            // dummy marine for list prototype, fix list size
+            // dummy marine for list prototype, this fixes JList size in GUI
+            // to prevent resizing on Marine add/remove
             jlGrp.setPrototypeCellValue(new Marine(1234567890, Marine.Grade.E3,
                     "Firstname", "M", "Lastname", 123, Marine.Tier.T1));
             JScrollPane jsp = new JScrollPane(jlGrp);
